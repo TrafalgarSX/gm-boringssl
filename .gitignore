@@ -36,3 +36,9 @@
 
 # Ignore target under any directory.
 target/
+
+VS-amd64/
+VS-x86/
+.vscode
+.cache
+compile_commands.json

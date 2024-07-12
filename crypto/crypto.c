@@ -98,6 +98,12 @@ HIDDEN uint32_t OPENSSL_armcap_P =
 #if defined(__ARM_FEATURE_SHA512)
     ARMV8_SHA512 |
 #endif
+#if defined(OPENSSL_STATIC_ARMCAP_SM4) || defined(__ARM_FEATURE_SM4)
+    ARMV8_SM4 |
+#endif
+#if defined(OPENSSL_STATIC_ARMCAP_SM3) || defined(__ARM_FEATURE_SM3)
+    ARMV8_SM3 |
+#endif
     0;
 
 #else

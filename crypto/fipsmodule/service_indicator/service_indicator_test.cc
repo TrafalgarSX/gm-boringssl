@@ -921,6 +921,16 @@ static const struct DigestTestVector {
         kOutput_sha512_256,
         FIPSStatus::APPROVED,
     },
+#if 0
+    {
+        "SM-3",
+        SM3_DIGEST_LENGTH,
+        &EVP_sm3,
+        &SM3,
+        kOutput_sm3,
+        FIPSStatus::APPROVED,
+    },
+#endif
 };
 
 class EVPMDServiceIndicatorTest : public TestWithNoErrors<DigestTestVector> {};

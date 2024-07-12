@@ -79,6 +79,11 @@
 // ARMV8_SHA512 indicates support for hardware SHA-512 instructions.
 #define ARMV8_SHA512 (1 << 6)
 
+// ARMV8_SM3 indicates support for hardware ARMV8-SM3 instructions.
+#define ARMV8_SM3       (1<<9)
+// ARMV8_SM4 indicates support for hardware ARMV8-SM4 instructions.
+#define ARMV8_SM4       (1<<10)
+
 #endif  // ARM || AARCH64
 
 #endif  // OPENSSL_HEADER_ARM_ARCH_H

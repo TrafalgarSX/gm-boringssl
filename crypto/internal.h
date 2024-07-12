@@ -232,18 +232,18 @@ typedef __uint128_t uint128_t;
 #elif defined(__cplusplus) && __cplusplus >= 201103L && defined(__GNUC__) && \
     __GNUC__ >= 7
 #define OPENSSL_FALLTHROUGH [[gnu::fallthrough]]
-#elif defined(__GNUC__) && __GNUC__ >= 7 // gcc 7
-#define OPENSSL_FALLTHROUGH __attribute__ ((fallthrough))
+#elif defined(__GNUC__) && __GNUC__ >= 7  // gcc 7
+#define OPENSSL_FALLTHROUGH __attribute__((fallthrough))
 #elif defined(__clang__)
 #if __has_attribute(fallthrough) && __clang_major__ >= 5
 // Clang 3.5, at least, complains about "error: declaration does not declare
 // anything", possibily because we put a semicolon after this macro in
 // practice. Thus limit it to >= Clang 5, which does work.
-#define OPENSSL_FALLTHROUGH __attribute__ ((fallthrough))
-#else // clang versions that do not support fallthrough.
+#define OPENSSL_FALLTHROUGH __attribute__((fallthrough))
+#else  // clang versions that do not support fallthrough.
 #define OPENSSL_FALLTHROUGH
 #endif
-#else // C++11 on gcc 6, and all other cases
+#else  // C++11 on gcc 6, and all other cases
 #define OPENSSL_FALLTHROUGH
 #endif
 
@@ -309,8 +309,8 @@ OPENSSL_INLINE void OPENSSL_enable_malloc_failures_for_testing(void) {}
 // Pointer utility functions.
 
 // buffers_alias returns one if |a| and |b| alias and zero otherwise.
-static inline int buffers_alias(const void *a, size_t a_bytes,
-                                const void *b, size_t b_bytes) {
+static inline int buffers_alias(const void *a, size_t a_bytes, const void *b,
+                                size_t b_bytes) {
   // Cast |a| and |b| to integers. In C, pointer comparisons between unrelated
   // objects are undefined whereas pointer to integer conversions are merely
   // implementation-defined. We assume the implementation defined it in a sane
@@ -446,7 +446,7 @@ static inline crypto_word_t constant_time_lt_w(crypto_word_t a,
   // (assert (not (= (= #x00000001 (bvlshr (lt a b) #x0000001f)) (bvult a b))))
   // (check-sat)
   // (get-model)
-  return constant_time_msb_w(a^((a^b)|((a-b)^a)));
+  return constant_time_msb_w(a ^ ((a ^ b) | ((a - b) ^ a)));
 }
 
 // constant_time_lt_8 acts like |constant_time_lt_w| but returns an 8-bit
@@ -477,9 +477,8 @@ static inline crypto_word_t constant_time_is_zero_w(crypto_word_t a) {
   //
   // (declare-fun a () (_ BitVec 32))
   //
-  // (assert (not (= (= #x00000001 (bvlshr (is_zero a) #x0000001f)) (= a #x00000000))))
-  // (check-sat)
-  // (get-model)
+  // (assert (not (= (= #x00000001 (bvlshr (is_zero a) #x0000001f)) (= a
+  // #x00000000)))) (check-sat) (get-model)
   return constant_time_msb_w(~a & (a - 1));
 }
 
@@ -691,7 +690,8 @@ OPENSSL_INLINE void CRYPTO_atomic_store_u32(CRYPTO_atomic_u32 *val,
 
 typedef LONG CRYPTO_atomic_u32;
 
-OPENSSL_INLINE uint32_t CRYPTO_atomic_load_u32(volatile CRYPTO_atomic_u32 *val) {
+OPENSSL_INLINE uint32_t
+CRYPTO_atomic_load_u32(volatile CRYPTO_atomic_u32 *val) {
   // This is not ideal because it still writes to a cacheline. MSVC is not able
   // to optimize this to a true atomic read, and Windows does not provide an
   // InterlockedLoad function.
@@ -706,8 +706,10 @@ OPENSSL_INLINE uint32_t CRYPTO_atomic_load_u32(volatile CRYPTO_atomic_u32 *val) 
   // preferable a global mutex, and eventually this code will be replaced by
   // [2]. Additionally, on clang-cl, we'll use the |OPENSSL_C11_ATOMIC| path.
   //
-  // [1] https://learn.microsoft.com/en-us/windows/win32/sync/interlocked-variable-access
-  // [2] https://devblogs.microsoft.com/cppblog/c11-atomics-in-visual-studio-2022-version-17-5-preview-2/
+  // [1]
+  // https://learn.microsoft.com/en-us/windows/win32/sync/interlocked-variable-access
+  // [2]
+  // https://devblogs.microsoft.com/cppblog/c11-atomics-in-visual-studio-2022-version-17-5-preview-2/
   return (uint32_t)InterlockedCompareExchange(val, 0, 0);
 }
 
@@ -790,7 +792,7 @@ OPENSSL_EXPORT int CRYPTO_refcount_dec_and_test_zero(CRYPTO_refcount_t *count);
 typedef struct crypto_mutex_st {
   char padding;  // Empty structs have different sizes in C and C++.
 } CRYPTO_MUTEX;
-#define CRYPTO_MUTEX_INIT { 0 }
+#define CRYPTO_MUTEX_INIT {0}
 #elif defined(OPENSSL_WINDOWS_THREADS)
 typedef SRWLOCK CRYPTO_MUTEX;
 #define CRYPTO_MUTEX_INIT SRWLOCK_INIT
@@ -921,7 +923,7 @@ typedef struct {
 
 #define CRYPTO_EX_DATA_CLASS_INIT {CRYPTO_MUTEX_INIT, NULL, NULL, 0, 0}
 #define CRYPTO_EX_DATA_CLASS_INIT_WITH_APP_DATA \
-    {CRYPTO_MUTEX_INIT, NULL, NULL, 0, 1}
+  {CRYPTO_MUTEX_INIT, NULL, NULL, 0, 1}
 
 // CRYPTO_get_ex_new_index_ex allocates a new index for |ex_data_class|. Each
 // class of object should provide a wrapper function that uses the correct
@@ -967,21 +969,13 @@ OPENSSL_MSVC_PRAGMA(warning(push, 3))
 #include <stdlib.h>
 OPENSSL_MSVC_PRAGMA(warning(pop))
 #pragma intrinsic(_byteswap_uint64, _byteswap_ulong, _byteswap_ushort)
-static inline uint16_t CRYPTO_bswap2(uint16_t x) {
-  return _byteswap_ushort(x);
-}
+static inline uint16_t CRYPTO_bswap2(uint16_t x) { return _byteswap_ushort(x); }
 
-static inline uint32_t CRYPTO_bswap4(uint32_t x) {
-  return _byteswap_ulong(x);
-}
+static inline uint32_t CRYPTO_bswap4(uint32_t x) { return _byteswap_ulong(x); }
 
-static inline uint64_t CRYPTO_bswap8(uint64_t x) {
-  return _byteswap_uint64(x);
-}
+static inline uint64_t CRYPTO_bswap8(uint64_t x) { return _byteswap_uint64(x); }
 #else
-static inline uint16_t CRYPTO_bswap2(uint16_t x) {
-  return (x >> 8) | (x << 8);
-}
+static inline uint16_t CRYPTO_bswap2(uint16_t x) { return (x >> 8) | (x << 8); }
 
 static inline uint32_t CRYPTO_bswap4(uint32_t x) {
   x = (x >> 16) | (x << 16);
@@ -1355,9 +1349,7 @@ OPENSSL_INLINE int boringssl_fips_break_test(const char *test) {
   return value != NULL && strcmp(value, test) == 0;
 }
 #else
-OPENSSL_INLINE int boringssl_fips_break_test(const char *test) {
-  return 0;
-}
+OPENSSL_INLINE int boringssl_fips_break_test(const char *test) { return 0; }
 #endif  // BORINGSSL_FIPS_BREAK_TESTS
 
 
@@ -1652,6 +1644,27 @@ OPENSSL_INLINE int CRYPTO_is_ARMv8_SHA512_capable(void) {
   return 0;
 #else
   return (OPENSSL_get_armcap() & ARMV8_SHA512) != 0;
+#endif
+}
+
+OPENSSL_INLINE int CRYPTO_is_ARMv8_SM3_capable(void) {
+  // There is no |OPENSSL_STATIC_ARMCAP_SHA512|.
+#if defined(__ARM_FEATURE_SM3)
+  return 1;
+#elif defined(OPENSSL_STATIC_ARMCAP)
+  return 0;
+#else
+  return (OPENSSL_get_armcap() & ARMV8_SM3) != 0;
+#endif
+}
+
+OPENSSL_INLINE int CRYPTO_is_ARMv8_SM4_capable(void) {
+#if defined(OPENSSL_STATIC_ARMCAP_SM4) || defined(__ARM_FEATURE_SM4)
+  return 1;
+#elif defined(OPENSSL_STATIC_ARMCAP)
+  return 0;
+#else
+  return (OPENSSL_get_armcap() & ARMV8_SM4) != 0;
 #endif
 }
 
