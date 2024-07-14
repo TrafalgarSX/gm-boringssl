@@ -106,6 +106,9 @@
 #include "sha/sha256.c"
 #include "sha/sha512.c"
 #include "tls/kdf.c"
+#ifndef OPENSSL_NO_SM3
+#include "sm3/sm3.c"
+#endif
 
 
 #if defined(BORINGSSL_FIPS)

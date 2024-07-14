@@ -93,7 +93,7 @@ static void sm3_output_state(uint8_t out[SM3_DIGEST_LENGTH],
 }
 
 int SM3_Final(uint8_t *out, SM3_CTX *c) {
-  crypto_md32_final(&sm3_block_data_order, c->A, c->data, SM3_DIGEST_LENGTH,
+  crypto_md32_final(&sm3_block_data_order, c->A, c->data, SM3_CBLOCK,
                     &c->num, c->Nh, c->Nl, 1);
   sm3_output_state(out, c);
   FIPS_service_indicator_update_state();
@@ -103,9 +103,8 @@ int SM3_Final(uint8_t *out, SM3_CTX *c) {
 // wired marco 
 #if !defined(SM3_ASM)
 
-void sm3_block_data_order_soft(uint32_t state[8], const uint8_t *p,
+void sm3_block_data_order_soft(uint32_t state[8], const uint8_t *data,
                                size_t num) {
-  const uint8_t *data = p;
   register uint32_t A, B, C, D, E, F, G, H;
 
   uint32_t W00, W01, W02, W03, W04, W05, W06, W07, W08, W09, W10, W11, W12, W13,
