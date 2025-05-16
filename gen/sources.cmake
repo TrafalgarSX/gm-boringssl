@@ -98,6 +98,7 @@ set(
   crypto/fipsmodule/sha/sha1.c
   crypto/fipsmodule/sha/sha256.c
   crypto/fipsmodule/sha/sha512.c
+  crypto/fipsmodule/sm3/sm3.c
   crypto/fipsmodule/tls/kdf.c
 )
 
@@ -580,6 +581,7 @@ set(
   include/openssl/safestack.h
   include/openssl/service_indicator.h
   include/openssl/sha.h
+  include/openssl/sm3.h
   include/openssl/siphash.h
   include/openssl/span.h
   include/openssl/stack.h
@@ -634,6 +636,7 @@ set(
   crypto/fipsmodule/rsa/internal.h
   crypto/fipsmodule/service_indicator/internal.h
   crypto/fipsmodule/sha/internal.h
+  crypto/fipsmodule/sm3/internal.h
   crypto/fipsmodule/tls/internal.h
   crypto/hrss/internal.h
   crypto/internal.h
@@ -744,6 +747,7 @@ set(
   crypto/fipsmodule/rand/fork_detect_test.cc
   crypto/fipsmodule/service_indicator/service_indicator_test.cc
   crypto/fipsmodule/sha/sha_test.cc
+  crypto/fipsmodule/sm3/sm3_test.cc
   crypto/hmac_extra/hmac_test.cc
   crypto/hpke/hpke_test.cc
   crypto/hrss/hrss_test.cc
