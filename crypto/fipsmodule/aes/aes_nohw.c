@@ -1122,7 +1122,7 @@ static void aes_nohw_setup_key_256(AES_KEY *key, const uint8_t in[32]) {
 // External API.
 
 int aes_nohw_set_encrypt_key(const uint8_t *key, unsigned bits,
-                             AES_KEY *aeskey) {
+                             void *aeskey) {
   switch (bits) {
     case 128:
       aes_nohw_setup_key_128(aeskey, key);
@@ -1138,25 +1138,25 @@ int aes_nohw_set_encrypt_key(const uint8_t *key, unsigned bits,
 }
 
 int aes_nohw_set_decrypt_key(const uint8_t *key, unsigned bits,
-                             AES_KEY *aeskey) {
+                             void *aeskey) {
   return aes_nohw_set_encrypt_key(key, bits, aeskey);
 }
 
-void aes_nohw_encrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key) {
+void aes_nohw_encrypt(const uint8_t *in, uint8_t *out, const void *key) {
   AES_NOHW_SCHEDULE sched;
   aes_nohw_expand_round_keys(&sched, key);
   AES_NOHW_BATCH batch;
   aes_nohw_to_batch(&batch, in, /*num_blocks=*/1);
-  aes_nohw_encrypt_batch(&sched, key->rounds, &batch);
+  aes_nohw_encrypt_batch(&sched, ((AES_KEY*)key)->rounds, &batch);
   aes_nohw_from_batch(out, /*num_blocks=*/1, &batch);
 }
 
-void aes_nohw_decrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key) {
+void aes_nohw_decrypt(const uint8_t *in, uint8_t *out, const void *key) {
   AES_NOHW_SCHEDULE sched;
   aes_nohw_expand_round_keys(&sched, key);
   AES_NOHW_BATCH batch;
   aes_nohw_to_batch(&batch, in, /*num_blocks=*/1);
-  aes_nohw_decrypt_batch(&sched, key->rounds, &batch);
+  aes_nohw_decrypt_batch(&sched, ((AES_KEY*)key)->rounds, &batch);
   aes_nohw_from_batch(out, /*num_blocks=*/1, &batch);
 }
 
@@ -1172,7 +1172,7 @@ static inline void aes_nohw_xor_block(uint8_t out[16], const uint8_t a[16],
 }
 
 void aes_nohw_ctr32_encrypt_blocks(const uint8_t *in, uint8_t *out,
-                                   size_t blocks, const AES_KEY *key,
+                                   size_t blocks, const void *key,
                                    const uint8_t ivec[16]) {
   if (blocks == 0) {
     return;
@@ -1198,7 +1198,7 @@ void aes_nohw_ctr32_encrypt_blocks(const uint8_t *in, uint8_t *out,
     size_t todo = blocks >= AES_NOHW_BATCH_SIZE ? AES_NOHW_BATCH_SIZE : blocks;
     AES_NOHW_BATCH batch;
     aes_nohw_to_batch(&batch, ivs, todo);
-    aes_nohw_encrypt_batch(&sched, key->rounds, &batch);
+    aes_nohw_encrypt_batch(&sched, ((AES_KEY*)key)->rounds, &batch);
     aes_nohw_from_batch(enc_ivs, todo, &batch);
 
     for (size_t i = 0; i < todo; i++) {
@@ -1217,7 +1217,7 @@ void aes_nohw_ctr32_encrypt_blocks(const uint8_t *in, uint8_t *out,
 }
 
 void aes_nohw_cbc_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                          const AES_KEY *key, uint8_t *ivec, const int enc) {
+                          const void *key, uint8_t *ivec, const int enc) {
   assert(len % 16 == 0);
   size_t blocks = len / 16;
   if (blocks == 0) {
@@ -1236,7 +1236,7 @@ void aes_nohw_cbc_encrypt(const uint8_t *in, uint8_t *out, size_t len,
 
       AES_NOHW_BATCH batch;
       aes_nohw_to_batch(&batch, iv, /*num_blocks=*/1);
-      aes_nohw_encrypt_batch(&sched, key->rounds, &batch);
+      aes_nohw_encrypt_batch(&sched, ((AES_KEY*)key)->rounds, &batch);
       aes_nohw_from_batch(out, /*num_blocks=*/1, &batch);
 
       memcpy(iv, out, 16);
@@ -1257,7 +1257,7 @@ void aes_nohw_cbc_encrypt(const uint8_t *in, uint8_t *out, size_t len,
 
     AES_NOHW_BATCH batch;
     aes_nohw_to_batch(&batch, in, todo);
-    aes_nohw_decrypt_batch(&sched, key->rounds, &batch);
+    aes_nohw_decrypt_batch(&sched, ((AES_KEY*)key)->rounds, &batch);
     aes_nohw_from_batch(out, todo, &batch);
 
     aes_nohw_xor_block(out, out, iv);

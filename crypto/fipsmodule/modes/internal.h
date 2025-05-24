@@ -74,7 +74,7 @@ extern "C" {
 //
 // These functions are called exclusively with AES, so we use the former.
 typedef void (*block128_f)(const uint8_t in[16], uint8_t out[16],
-                           const AES_KEY *key);
+                           const void *key);
 
 OPENSSL_INLINE void CRYPTO_xor16(uint8_t out[16], const uint8_t a[16],
                                  const uint8_t b[16]) {
@@ -95,7 +95,7 @@ OPENSSL_INLINE void CRYPTO_xor16(uint8_t out[16], const uint8_t a[16],
 
 // ctr128_f is the type of a function that performs CTR-mode encryption.
 typedef void (*ctr128_f)(const uint8_t *in, uint8_t *out, size_t blocks,
-                         const AES_KEY *key, const uint8_t ivec[16]);
+                         const void *key, const uint8_t ivec[16]);
 
 // CRYPTO_ctr128_encrypt encrypts (or decrypts, it's the same in CTR mode)
 // |len| bytes from |in| to |out| using |block| in counter mode. There's no
@@ -104,7 +104,7 @@ typedef void (*ctr128_f)(const uint8_t *in, uint8_t *out, size_t blocks,
 // call. The counter is a 128-bit, big-endian value in |ivec| and is
 // incremented by this function.
 void CRYPTO_ctr128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                           const AES_KEY *key, uint8_t ivec[16],
+                           const void *key, uint8_t ivec[16],
                            uint8_t ecount_buf[16], unsigned *num,
                            block128_f block);
 
@@ -113,7 +113,7 @@ void CRYPTO_ctr128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
 // bits of the counter. This is useful when |ctr| can be an optimised
 // function.
 void CRYPTO_ctr128_encrypt_ctr32(const uint8_t *in, uint8_t *out, size_t len,
-                                 const AES_KEY *key, uint8_t ivec[16],
+                                 const void *key, uint8_t ivec[16],
                                  uint8_t ecount_buf[16], unsigned *num,
                                  ctr128_f ctr);
 
@@ -333,14 +333,14 @@ void aes_gcm_dec_kernel(const uint8_t *in, uint64_t in_bits, void *out,
 
 // cbc128_f is the type of a function that performs CBC-mode encryption.
 typedef void (*cbc128_f)(const uint8_t *in, uint8_t *out, size_t len,
-                         const AES_KEY *key, uint8_t ivec[16], int enc);
+                         const void *key, uint8_t ivec[16], int enc);
 
 // CRYPTO_cbc128_encrypt encrypts |len| bytes from |in| to |out| using the
 // given IV and block cipher in CBC mode. The input need not be a multiple of
 // 128 bits long, but the output will round up to the nearest 128 bit multiple,
 // zero padding the input if needed. The IV will be updated on return.
 void CRYPTO_cbc128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                           const AES_KEY *key, uint8_t ivec[16],
+                           const void *key, uint8_t ivec[16],
                            block128_f block);
 
 // CRYPTO_cbc128_decrypt decrypts |len| bytes from |in| to |out| using the
@@ -348,7 +348,7 @@ void CRYPTO_cbc128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
 // bits then only that many bytes will be written, but a multiple of 128 bits
 // is always read from |in|. The IV will be updated on return.
 void CRYPTO_cbc128_decrypt(const uint8_t *in, uint8_t *out, size_t len,
-                           const AES_KEY *key, uint8_t ivec[16],
+                           const void *key, uint8_t ivec[16],
                            block128_f block);
 
 

@@ -109,7 +109,7 @@ int AES_set_decrypt_key(const uint8_t *key, unsigned bits, AES_KEY *aeskey) {
 // On x86 and x86_64, |aes_hw_set_decrypt_key|, we implement
 // |aes_hw_encrypt_key_to_decrypt_key| in assembly and rely on C code to combine
 // the operations.
-int aes_hw_set_decrypt_key(const uint8_t *user_key, int bits, AES_KEY *key) {
+int aes_hw_set_decrypt_key(const uint8_t *user_key, int bits, void *key) {
   int ret = aes_hw_set_encrypt_key(user_key, bits, key);
   if (ret == 0) {
     aes_hw_encrypt_key_to_decrypt_key(key);
@@ -117,7 +117,7 @@ int aes_hw_set_decrypt_key(const uint8_t *user_key, int bits, AES_KEY *key) {
   return ret;
 }
 
-int aes_hw_set_encrypt_key(const uint8_t *user_key, int bits, AES_KEY *key) {
+int aes_hw_set_encrypt_key(const uint8_t *user_key, int bits, void *key) {
   if (aes_hw_set_encrypt_key_alt_preferred()) {
     return aes_hw_set_encrypt_key_alt(user_key, bits, key);
   } else {

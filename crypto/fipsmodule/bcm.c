@@ -31,6 +31,7 @@
 #include "../internal.h"
 
 #include "aes/aes.c"
+#include "sm4/sm4.c"
 #include "aes/aes_nohw.c"
 #include "aes/key_wrap.c"
 #include "aes/mode_wrappers.c"
@@ -59,6 +60,7 @@
 #include "cipher/cipher.c"
 #include "cipher/e_aes.c"
 #include "cipher/e_aesccm.c"
+#include "cipher/e_sm4.c"
 #include "cmac/cmac.c"
 #include "dh/check.c"
 #include "dh/dh.c"

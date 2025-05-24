@@ -24,6 +24,7 @@ set(
   BCM_INTERNAL_HEADERS
 
   crypto/fipsmodule/aes/aes.c
+  crypto/fipsmodule/sm4/sm4.c
   crypto/fipsmodule/aes/aes_nohw.c
   crypto/fipsmodule/aes/key_wrap.c
   crypto/fipsmodule/aes/mode_wrappers.c
@@ -52,6 +53,7 @@ set(
   crypto/fipsmodule/cipher/cipher.c
   crypto/fipsmodule/cipher/e_aes.c
   crypto/fipsmodule/cipher/e_aesccm.c
+  crypto/fipsmodule/cipher/e_sm4.c
   crypto/fipsmodule/cmac/cmac.c
   crypto/fipsmodule/dh/check.c
   crypto/fipsmodule/dh/dh.c
@@ -582,6 +584,7 @@ set(
   include/openssl/service_indicator.h
   include/openssl/sha.h
   include/openssl/sm3.h
+  include/openssl/sm4.h
   include/openssl/siphash.h
   include/openssl/span.h
   include/openssl/stack.h
@@ -637,6 +640,7 @@ set(
   crypto/fipsmodule/service_indicator/internal.h
   crypto/fipsmodule/sha/internal.h
   crypto/fipsmodule/sm3/internal.h
+  crypto/fipsmodule/sm4/internal.h
   crypto/fipsmodule/tls/internal.h
   crypto/hrss/internal.h
   crypto/internal.h
@@ -748,6 +752,7 @@ set(
   crypto/fipsmodule/service_indicator/service_indicator_test.cc
   crypto/fipsmodule/sha/sha_test.cc
   crypto/fipsmodule/sm3/sm3_test.cc
+  crypto/fipsmodule/sm4/sm4_test.cc
   crypto/hmac_extra/hmac_test.cc
   crypto/hpke/hpke_test.cc
   crypto/hrss/hrss_test.cc

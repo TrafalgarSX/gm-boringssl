@@ -62,6 +62,8 @@
 #include "../aes/internal.h"
 #include "internal.h"
 
+using block128_f_void = void (*)(const uint8_t in[16], uint8_t out[16],
+                                 const void *key);
 
 TEST(GCMTest, TestVectors) {
   FileTestGTest("crypto/fipsmodule/modes/gcm_tests.txt", [](FileTest *t) {
@@ -84,7 +86,7 @@ TEST(GCMTest, TestVectors) {
 
     GCM128_CONTEXT ctx;
     OPENSSL_memset(&ctx, 0, sizeof(ctx));
-    CRYPTO_gcm128_init_key(&ctx.gcm_key, &aes_key, AES_encrypt, 0);
+    CRYPTO_gcm128_init_key(&ctx.gcm_key, &aes_key, (block128_f_void)AES_encrypt, 0);
     CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce.data(), nonce.size());
     if (!additional_data.empty()) {
       CRYPTO_gcm128_aad(&ctx, additional_data.data(), additional_data.size());
