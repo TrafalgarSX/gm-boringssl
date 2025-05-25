@@ -30,7 +30,7 @@ int ossl_sm2_key_private_check(const EC_KEY *eckey)
             || (group = EC_KEY_get0_group(eckey)) == NULL
             || (priv_key = EC_KEY_get0_private_key(eckey)) == NULL
             || (order = EC_GROUP_get0_order(group)) == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_PASSED_NULL_PARAMETER);
+        OPENSSL_PUT_ERROR(sm2, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -40,7 +40,7 @@ int ossl_sm2_key_private_check(const EC_KEY *eckey)
         goto end;
     if (BN_cmp(priv_key, BN_value_one()) < 0
         || BN_cmp(priv_key, max) >= 0) {
-        ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_PRIVATE_KEY);
+        OPENSSL_PUT_ERROR(sm2, SM2_R_INVALID_PRIVATE_KEY);
         goto end;
     }
     ret = 1;
