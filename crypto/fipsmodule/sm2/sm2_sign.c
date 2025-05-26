@@ -17,6 +17,7 @@
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/mem.h>
+#include <openssl/ecdsa.h>
 #include <openssl/sm2err.h>
 #include <openssl/sm2.h>
 #include <string.h>
@@ -253,7 +254,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
      *     in clause 4.2.2 of GM/T 0003.1-2012. Then the signature of message M is (r,s).
      */
     for (;;) {
-        if (!BN_priv_rand_range_ex(k, order, 0, ctx)) {
+        if (!BN_rand_range(k, order)) {
             OPENSSL_PUT_ERROR(SM2, ERR_R_INTERNAL_ERROR);
             goto done;
         }
@@ -279,7 +280,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
             continue;
 
         if (!BN_add(s, dA, BN_value_one())
-                || !ossl_ec_group_do_inverse_ord(group, s, s, ctx)
+                || !BN_mod_inverse(s, s, order, ctx)
                 || !BN_mod_mul(tmp, dA, r, order, ctx)
                 || !BN_sub(tmp, k, tmp)
                 || !BN_mod_mul(s, s, tmp, order, ctx)) {

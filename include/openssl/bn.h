@@ -990,7 +990,7 @@ OPENSSL_EXPORT BIGNUM *BN_secure_new(void);
 // BN_le2bn calls |BN_lebin2bn|.
 OPENSSL_EXPORT BIGNUM *BN_le2bn(const uint8_t *in, size_t len, BIGNUM *ret);
 
-
+OPENSSL_EXPORT int BN_rand_range(BIGNUM *r, const BIGNUM *range);
 // Private functions
 
 struct bignum_st {

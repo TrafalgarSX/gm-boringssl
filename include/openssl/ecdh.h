@@ -75,6 +75,10 @@
 extern "C" {
 #endif
 
+int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
+                   const unsigned char *Z, size_t Zlen,
+                   const unsigned char *sinfo, size_t sinfolen,
+                   const EVP_MD *md);
 
 // Elliptic curve Diffie-Hellman.
 

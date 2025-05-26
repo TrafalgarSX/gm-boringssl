@@ -111,6 +111,10 @@
 #ifndef OPENSSL_NO_SM3
 #include "sm3/sm3.c"
 #endif
+#include "sm2/ecdh_kdf.c"
+#include "sm2/sm2_crypt.c"
+#include "sm2/sm2_key.c"
+#include "sm2/sm2_sign.c"
 
 
 #if defined(BORINGSSL_FIPS)

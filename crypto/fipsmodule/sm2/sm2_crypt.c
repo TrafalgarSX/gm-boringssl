@@ -23,7 +23,10 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/mem.h>
+#include <openssl/ecdh.h>
 #include <string.h>
+
+DECLARE_ASN1_ITEM(BIGNUM)
 
 typedef struct SM2_Ciphertext_st SM2_Ciphertext;
 DECLARE_ASN1_FUNCTIONS(SM2_Ciphertext)
@@ -141,7 +144,6 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     uint8_t *C3 = NULL;
     size_t field_size;
     const int C3_size = EVP_MD_size(digest);
-    EVP_MD *fetched_digest = NULL;
 
     /* NULL these before any "goto done" */
     ctext_struct.C2 = NULL;
@@ -195,7 +197,7 @@ int ossl_sm2_encrypt(const EC_KEY *key,
        goto done;
 
 again:
-    if (!BN_priv_rand_range_ex(k, order, 0, ctx)) {
+    if (!BN_rand_range(k, order)) {
         OPENSSL_PUT_ERROR(SM2, ERR_R_INTERNAL_ERROR);
         goto done;
     }
@@ -215,8 +217,8 @@ again:
     }
 
     /* X9.63 with no salt happens to match the KDF used in SM2 */
-    if (!ossl_ecdh_kdf_X9_63(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
-                             digest, libctx, propq)) {
+    if (!ECDH_KDF_X9_62(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
+                             digest)) {
         OPENSSL_PUT_ERROR(SM2, ERR_R_EVP_LIB);
         goto done;
     }
@@ -229,12 +231,7 @@ again:
     for (i = 0; i != msg_len; ++i)
         msg_mask[i] ^= msg[i];
 
-    fetched_digest = EVP_MD_fetch(libctx, EVP_MD_get0_name(digest), propq);
-    if (fetched_digest == NULL) {
-        OPENSSL_PUT_ERROR(SM2, ERR_R_INTERNAL_ERROR);
-        goto done;
-    }
-    if (EVP_DigestInit(hash, fetched_digest) == 0
+    if (EVP_DigestInit(hash, digest) == 0
             || EVP_DigestUpdate(hash, x2y2, field_size) == 0
             || EVP_DigestUpdate(hash, msg, msg_len) == 0
             || EVP_DigestUpdate(hash, x2y2 + field_size, field_size) == 0
@@ -269,7 +266,6 @@ again:
     rc = 1;
 
  done:
-    EVP_MD_free(fetched_digest);
     ASN1_OCTET_STRING_free(ctext_struct.C2);
     ASN1_OCTET_STRING_free(ctext_struct.C3);
     OPENSSL_free(msg_mask);
@@ -369,8 +365,8 @@ int ossl_sm2_decrypt(const EC_KEY *key,
 
     if (BN_bn2binpad(x2, x2y2, field_size) < 0
             || BN_bn2binpad(y2, x2y2 + field_size, field_size) < 0
-            || !ossl_ecdh_kdf_X9_63(msg_mask, msg_len, x2y2, 2 * field_size,
-                                    NULL, 0, digest, libctx, propq)) {
+            || !ECDH_KDF_X9_62(msg_mask, msg_len, x2y2, 2 * field_size,
+                                    NULL, 0, digest)) {
         OPENSSL_PUT_ERROR(SM2, ERR_R_INTERNAL_ERROR);
         goto done;
     }

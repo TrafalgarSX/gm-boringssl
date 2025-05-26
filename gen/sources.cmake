@@ -374,6 +374,7 @@ set(
   crypto/evp/p_rsa_asn1.c
   crypto/evp/p_x25519.c
   crypto/evp/p_x25519_asn1.c
+  crypto/evp/p_sm2.c
   crypto/evp/pbkdf.c
   crypto/evp/print.c
   crypto/evp/scrypt.c
