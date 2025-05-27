@@ -223,6 +223,42 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p521) {
   out->field_greater_than_order = 1;
 }
 
+
+DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_sm2p256v1) {
+  out->curve_name = NID_sm2;
+  out->comment = "SM2 curve over a 256 bit prime field";
+  // 1.3.132.0.33
+  // TODO
+  static const uint8_t kOIDP224[] = {0x2b, 0x81, 0x04, 0x00, 0x21};
+  OPENSSL_memcpy(out->oid, kOIDP224, sizeof(kOIDP224));
+  out->oid_len = sizeof(kOIDP224);
+
+  ec_group_init_static_mont(&out->field, OPENSSL_ARRAY_SIZE(kP224Field),
+                            kP224Field, kP224FieldRR, kP224FieldN0);
+  ec_group_init_static_mont(&out->order, OPENSSL_ARRAY_SIZE(kP224Order),
+                            kP224Order, kP224OrderRR, kP224OrderN0);
+
+#if defined(BORINGSSL_HAS_UINT128) && !defined(OPENSSL_SMALL)
+  out->meth = EC_GFp_nistp224_method();
+  OPENSSL_memcpy(out->generator.raw.X.words, kP224GX, sizeof(kP224GX));
+  OPENSSL_memcpy(out->generator.raw.Y.words, kP224GY, sizeof(kP224GY));
+  out->generator.raw.Z.words[0] = 1;
+  OPENSSL_memcpy(out->b.words, kP224B, sizeof(kP224B));
+#else
+  out->meth = EC_GFp_mont_method();
+  OPENSSL_memcpy(out->generator.raw.X.words, kP224MontGX, sizeof(kP224MontGX));
+  OPENSSL_memcpy(out->generator.raw.Y.words, kP224MontGY, sizeof(kP224MontGY));
+  OPENSSL_memcpy(out->generator.raw.Z.words, kP224FieldR, sizeof(kP224FieldR));
+  OPENSSL_memcpy(out->b.words, kP224MontB, sizeof(kP224MontB));
+#endif
+  out->generator.group = out;
+
+  ec_group_set_a_minus3(out);
+  out->has_order = 1;
+  out->field_greater_than_order = 1;
+
+}
+
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
                                  const BIGNUM *b, BN_CTX *ctx) {
   if (BN_num_bytes(p) > EC_MAX_BYTES) {
@@ -338,6 +374,8 @@ EC_GROUP *EC_GROUP_new_by_curve_name(int nid) {
       return (EC_GROUP *)EC_group_p384();
     case NID_secp521r1:
       return (EC_GROUP *)EC_group_p521();
+    case NID_sm2:
+      return (EC_GROUP *)EC_group_sm2p256v1();
     default:
       OPENSSL_PUT_ERROR(EC, EC_R_UNKNOWN_GROUP);
       return NULL;
@@ -444,6 +482,8 @@ const char *EC_curve_nid2nist(int nid) {
       return "P-384";
     case NID_secp521r1:
       return "P-521";
+    case NID_sm2:
+      return "SM2-P256";  // SM2 is a variant of P-256.
   }
   return NULL;
 }
@@ -460,6 +500,9 @@ int EC_curve_nist2nid(const char *name) {
   }
   if (strcmp(name, "P-521") == 0) {
     return NID_secp521r1;
+  }
+  if (strcmp(name, "SM2-P256") == 0) {
+    return NID_sm2;
   }
   return NID_undef;
 }

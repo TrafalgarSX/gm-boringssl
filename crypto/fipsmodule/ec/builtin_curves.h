@@ -89,6 +89,23 @@ OPENSSL_UNUSED static const uint32_t kP224MontGY[] = {
 #error "unknown word size"
 #endif
 
+// sm2-p256v1
+OPENSSL_UNUSED static const uint64_t kSM2-256FieldN0 = 0x0000000000000001;
+OPENSSL_UNUSED static const uint64_t kSM2-256OrderN0 = 0xccd1c8aaee00bc4f;
+#if defined(OPENSSL_64_BIT)
+// P
+OPENSSL_UNUSED static const uint64_t kSM2-256Field[] = {
+    0xffffffffffffffff, 0xffffffff00000000, 0xffffffffffffffff,
+    0xfffffffeffffffff};
+// Order
+OPENSSL_UNUSED static const uint64_t kSM2-256Order[] = {
+    0x53bbf40939d54123, 0x7203df6b21c6052b, 0xffffffffffffffff,
+    0xfffffffeffffffff};
+// 
+
+#elif defined(OPENSSL_32_BIT)
+#endif
+
 // P-256
 OPENSSL_UNUSED static const uint64_t kP256FieldN0 = 0x0000000000000001;
 OPENSSL_UNUSED static const uint64_t kP256OrderN0 = 0xccd1c8aaee00bc4f;
