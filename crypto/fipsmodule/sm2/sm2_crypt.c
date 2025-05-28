@@ -26,10 +26,7 @@
 #include <openssl/ecdh.h>
 #include <string.h>
 
-DECLARE_ASN1_ITEM(BIGNUM)
-
 typedef struct SM2_Ciphertext_st SM2_Ciphertext;
-DECLARE_ASN1_FUNCTIONS(SM2_Ciphertext)
 
 struct SM2_Ciphertext_st {
     BIGNUM *C1x;
@@ -38,14 +35,6 @@ struct SM2_Ciphertext_st {
     ASN1_OCTET_STRING *C2;
 };
 
-ASN1_SEQUENCE(SM2_Ciphertext) = {
-    ASN1_SIMPLE(SM2_Ciphertext, C1x, BIGNUM),
-    ASN1_SIMPLE(SM2_Ciphertext, C1y, BIGNUM),
-    ASN1_SIMPLE(SM2_Ciphertext, C3, ASN1_OCTET_STRING),
-    ASN1_SIMPLE(SM2_Ciphertext, C2, ASN1_OCTET_STRING),
-} ASN1_SEQUENCE_END(SM2_Ciphertext)
-
-IMPLEMENT_ASN1_FUNCTIONS(SM2_Ciphertext)
 
 static size_t ec_field_size(const EC_GROUP *group)
 {

@@ -53,57 +53,101 @@ OPENSSL_UNUSED static const uint64_t kP224MontGY[] = {
     0x00000000614786f1};
 #elif defined(OPENSSL_32_BIT)
 OPENSSL_UNUSED static const uint32_t kP224Field[] = {
-    0x00000001, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff,
-    0xffffffff};
+    0x00000001, 0x00000000, 0x00000000, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff};
 OPENSSL_UNUSED static const uint32_t kP224Order[] = {
-    0x5c5c2a3d, 0x13dd2945, 0xe0b8f03e, 0xffff16a2, 0xffffffff, 0xffffffff,
-    0xffffffff};
+    0x5c5c2a3d, 0x13dd2945, 0xe0b8f03e, 0xffff16a2,
+    0xffffffff, 0xffffffff, 0xffffffff};
 OPENSSL_UNUSED static const uint32_t kP224B[] = {
-    0x2355ffb4, 0x270b3943, 0xd7bfd8ba, 0x5044b0b7, 0xf5413256, 0x0c04b3ab,
-    0xb4050a85};
+    0x2355ffb4, 0x270b3943, 0xd7bfd8ba, 0x5044b0b7,
+    0xf5413256, 0x0c04b3ab, 0xb4050a85};
 OPENSSL_UNUSED static const uint32_t kP224GX[] = {
-    0x115c1d21, 0x343280d6, 0x56c21122, 0x4a03c1d3, 0x321390b9, 0x6bb4bf7f,
-    0xb70e0cbd};
+    0x115c1d21, 0x343280d6, 0x56c21122, 0x4a03c1d3,
+    0x321390b9, 0x6bb4bf7f, 0xb70e0cbd};
 OPENSSL_UNUSED static const uint32_t kP224GY[] = {
-    0x85007e34, 0x44d58199, 0x5a074764, 0xcd4375a0, 0x4c22dfe6, 0xb5f723fb,
-    0xbd376388};
+    0x85007e34, 0x44d58199, 0x5a074764, 0xcd4375a0,
+    0x4c22dfe6, 0xb5f723fb, 0xbd376388};
 OPENSSL_UNUSED static const uint32_t kP224FieldR[] = {
-    0xffffffff, 0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000};
+    0xffffffff, 0xffffffff, 0xffffffff, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000};
 OPENSSL_UNUSED static const uint32_t kP224FieldRR[] = {
-    0x00000001, 0x00000000, 0x00000000, 0xfffffffe, 0xffffffff, 0xffffffff,
-    0x00000000};
+    0x00000001, 0x00000000, 0x00000000, 0xfffffffe,
+    0xffffffff, 0xffffffff, 0x00000000};
 OPENSSL_UNUSED static const uint32_t kP224OrderRR[] = {
-    0x3ad01289, 0x6bdaae6c, 0x97a54552, 0x6ad09d91, 0xb1e97961, 0x1822bc47,
-    0xd4baa4cf};
+    0x3ad01289, 0x6bdaae6c, 0x97a54552, 0x6ad09d91,
+    0xb1e97961, 0x1822bc47, 0xd4baa4cf};
 OPENSSL_UNUSED static const uint32_t kP224MontB[] = {
-    0xe768cdf7, 0xccf01310, 0x743b1cc0, 0xc8528150, 0x3dceba98, 0x7fc02f93,
-    0x9c3fa633};
+    0xe768cdf7, 0xccf01310, 0x743b1cc0, 0xc8528150,
+    0x3dceba98, 0x7fc02f93, 0x9c3fa633};
 OPENSSL_UNUSED static const uint32_t kP224MontGX[] = {
-    0xbc905227, 0x6018bfaa, 0xf22fe220, 0xf96bec04, 0x6dd3af9b, 0xa21b5e60,
-    0x92f5b516};
+    0xbc905227, 0x6018bfaa, 0xf22fe220, 0xf96bec04,
+    0x6dd3af9b, 0xa21b5e60, 0x92f5b516};
 OPENSSL_UNUSED static const uint32_t kP224MontGY[] = {
-    0x2edca1e6, 0x05335a6b, 0xe8c15513, 0x03dfe878, 0xaea9c5ae, 0x614786f1,
-    0x100c1218};
+    0x2edca1e6, 0x05335a6b, 0xe8c15513, 0x03dfe878,
+    0xaea9c5ae, 0x614786f1, 0x100c1218};
 #else
 #error "unknown word size"
 #endif
 
 // sm2-p256v1
-OPENSSL_UNUSED static const uint64_t kSM2-256FieldN0 = 0x0000000000000001;
-OPENSSL_UNUSED static const uint64_t kSM2-256OrderN0 = 0xccd1c8aaee00bc4f;
+OPENSSL_UNUSED static const uint64_t kSM2_256FieldN0 = 0x0000000000000001;
+OPENSSL_UNUSED static const uint64_t kSM2_256OrderN0 = 0x327f9e8872350975;
 #if defined(OPENSSL_64_BIT)
 // P
-OPENSSL_UNUSED static const uint64_t kSM2-256Field[] = {
+OPENSSL_UNUSED static const uint64_t kSM2_256Field[] = {
     0xffffffffffffffff, 0xffffffff00000000, 0xffffffffffffffff,
     0xfffffffeffffffff};
 // Order
-OPENSSL_UNUSED static const uint64_t kSM2-256Order[] = {
+OPENSSL_UNUSED static const uint64_t kSM2_256Order[] = {
     0x53bbf40939d54123, 0x7203df6b21c6052b, 0xffffffffffffffff,
     0xfffffffeffffffff};
-// 
-
+OPENSSL_UNUSED static const uint64_t kSM2_256FieldR[] = {
+    0x0000000000000001, 0x00000000ffffffff, 0x0000000000000000,
+    0x0000000100000000};
+OPENSSL_UNUSED static const uint64_t kSM2_256FieldRR[] = {
+    0x0000000200000003, 0x00000002ffffffff, 0x0000000100000001,
+    0x0000000400000002};
+OPENSSL_UNUSED static const uint64_t kSM2_256OrderRR[] = {
+    0x901192af7c114f20, 0x3464504ade6fa2fa, 0x620fc84c3affe0d4,
+    0x1eb5e412a22b3d3b};
+OPENSSL_UNUSED static const uint64_t kSM2_256MontB[] = {
+    0x90d230632bc0dd42, 0x71cf379ae9b537ab, 0x527981505ea51c3c,
+    0x240fe188ba20e2c8};
+OPENSSL_UNUSED static const uint64_t kSM2_256MontGX[] = {
+    0x61328990f418029e, 0x3e7981eddca6c050, 0xd6a1ed99ac24c3c3,
+    0x91167a5ee1c13b05};
+OPENSSL_UNUSED static const uint64_t kSM2_256MontGY[] = {
+    0xc1354e593c2d0ddd, 0xc1f5e5788d3295fa, 0x8d4cfb066e2a48f8,
+    0x63cd65d481d735bd};
 #elif defined(OPENSSL_32_BIT)
+// P
+OPENSSL_UNUSED static const uint32_t kSM2_256Field[] = {
+    0xffffffff, 0xffffffff, 0x00000000, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xfffffffe};
+// Order
+OPENSSL_UNUSED static const uint32_t kSM2_256Order[] = {
+    0x39d54123, 0x53bbf409, 0x21c6052b, 0x7203df6b,
+    0xffffffff, 0xffffffff, 0xfffffffe, 0xffffffff};
+OPENSSL_UNUSED static const uint32_t kSM2_256FieldR[] = {
+    0x00000001, 0x00000000, 0xffffffff, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001};
+OPENSSL_UNUSED static const uint32_t kSM2_256FieldRR[] = {
+    0x00000003, 0x00000002, 0xffffffff, 0x00000002,
+    0x00000001, 0x00000001, 0x00000002, 0x00000004};
+OPENSSL_UNUSED static const uint32_t kSM2_256OrderRR[] = {
+    0x7c114f20, 0x901192af, 0xde6fa2fa, 0x3464504a,
+    0x3affe0d4, 0x620fc84c, 0xa22b3d3b, 0x1eb5e412};
+OPENSSL_UNUSED static const uint32_t kSM2_256MontB[] = {
+    0x2bc0dd42, 0x90d23063, 0xe9b537ab, 0x71cf379a,
+    0x5ea51c3c, 0x52798150, 0xba20e2c8, 0x240fe188};
+OPENSSL_UNUSED static const uint32_t kSM2_256MontGX[] = {
+    0xf418029e, 0x61328990, 0xdca6c050, 0x3e7981ed,
+    0xac24c3c3, 0xd6a1ed99, 0xe1c13b05, 0x91167a5e};
+OPENSSL_UNUSED static const uint32_t kSM2_256MontGY[] = {
+    0x3c2d0ddd, 0xc1354e59, 0x8d3295fa, 0xc1f5e578
+    0x6e2a48f8, 0x8d4cfb06, 0x81d735bd, 0x63cd65d4};
+#else
+#error "unknown word size"
 #endif
 
 // P-256
@@ -136,29 +180,29 @@ OPENSSL_UNUSED static const uint64_t kP256MontGY[] = {
     0x8571ff1825885d85};
 #elif defined(OPENSSL_32_BIT)
 OPENSSL_UNUSED static const uint32_t kP256Field[] = {
-    0xffffffff, 0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0x00000000,
-    0x00000001, 0xffffffff};
+    0xffffffff, 0xffffffff, 0xffffffff, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0xffffffff};
 OPENSSL_UNUSED static const uint32_t kP256Order[] = {
-    0xfc632551, 0xf3b9cac2, 0xa7179e84, 0xbce6faad, 0xffffffff, 0xffffffff,
-    0x00000000, 0xffffffff};
+    0xfc632551, 0xf3b9cac2, 0xa7179e84, 0xbce6faad,
+    0xffffffff, 0xffffffff, 0x00000000, 0xffffffff};
 OPENSSL_UNUSED static const uint32_t kP256FieldR[] = {
-    0x00000001, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff,
-    0xfffffffe, 0x00000000};
+    0x00000001, 0x00000000, 0x00000000, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xfffffffe, 0x00000000};
 OPENSSL_UNUSED static const uint32_t kP256FieldRR[] = {
-    0x00000003, 0x00000000, 0xffffffff, 0xfffffffb, 0xfffffffe, 0xffffffff,
-    0xfffffffd, 0x00000004};
+    0x00000003, 0x00000000, 0xffffffff, 0xfffffffb,
+    0xfffffffe, 0xffffffff, 0xfffffffd, 0x00000004};
 OPENSSL_UNUSED static const uint32_t kP256OrderRR[] = {
-    0xbe79eea2, 0x83244c95, 0x49bd6fa6, 0x4699799c, 0x2b6bec59, 0x2845b239,
-    0xf3d95620, 0x66e12d94};
+    0xbe79eea2, 0x83244c95, 0x49bd6fa6, 0x4699799c,
+    0x2b6bec59, 0x2845b239, 0xf3d95620, 0x66e12d94};
 OPENSSL_UNUSED static const uint32_t kP256MontB[] = {
-    0x29c4bddf, 0xd89cdf62, 0x78843090, 0xacf005cd, 0xf7212ed6, 0xe5a220ab,
-    0x04874834, 0xdc30061d};
+    0x29c4bddf, 0xd89cdf62, 0x78843090, 0xacf005cd,
+    0xf7212ed6, 0xe5a220ab, 0x04874834, 0xdc30061d};
 OPENSSL_UNUSED static const uint32_t kP256MontGX[] = {
-    0x18a9143c, 0x79e730d4, 0x5fedb601, 0x75ba95fc, 0x77622510, 0x79fb732b,
-    0xa53755c6, 0x18905f76};
+    0x18a9143c, 0x79e730d4, 0x5fedb601, 0x75ba95fc,
+    0x77622510, 0x79fb732b, 0xa53755c6, 0x18905f76};
 OPENSSL_UNUSED static const uint32_t kP256MontGY[] = {
-    0xce95560a, 0xddf25357, 0xba19e45c, 0x8b4ab8e4, 0xdd21f325, 0xd2e88688,
-    0x25885d85, 0x8571ff18};
+    0xce95560a, 0xddf25357, 0xba19e45c, 0x8b4ab8e4,
+    0xdd21f325, 0xd2e88688, 0x25885d85, 0x8571ff18};
 #else
 #error "unknown word size"
 #endif

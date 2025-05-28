@@ -72,7 +72,7 @@ static const EVP_PKEY_METHOD *const evp_methods[] = {
     &ed25519_pkey_meth,
     &x25519_pkey_meth,
     &hkdf_pkey_meth,
-    // &sm2_pkey_meth,
+    &sm2_pkey_meth,
 };
 
 static const EVP_PKEY_METHOD *evp_pkey_meth_find(int type) {

@@ -375,6 +375,7 @@ set(
   crypto/evp/p_x25519.c
   crypto/evp/p_x25519_asn1.c
   crypto/evp/p_sm2.c
+  crypto/evp/p_sm2_asn1.c
   crypto/evp/pbkdf.c
   crypto/evp/print.c
   crypto/evp/scrypt.c
@@ -752,6 +753,7 @@ set(
   crypto/fipsmodule/rand/fork_detect_test.cc
   crypto/fipsmodule/service_indicator/service_indicator_test.cc
   crypto/fipsmodule/sha/sha_test.cc
+  crypto/fipsmodule/sm2/sm2_test.cc
   crypto/fipsmodule/sm3/sm3_test.cc
   crypto/fipsmodule/sm4/sm4_test.cc
   crypto/hmac_extra/hmac_test.cc

@@ -227,36 +227,28 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p521) {
 DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_sm2p256v1) {
   out->curve_name = NID_sm2;
   out->comment = "SM2 curve over a 256 bit prime field";
-  // 1.3.132.0.33
+  // 1.2.156.10197.1.301
   // TODO
-  static const uint8_t kOIDP224[] = {0x2b, 0x81, 0x04, 0x00, 0x21};
-  OPENSSL_memcpy(out->oid, kOIDP224, sizeof(kOIDP224));
-  out->oid_len = sizeof(kOIDP224);
+  static const uint8_t kOIDSM2_P256[] = {0x2a, 0x81, 0x1c, 0xcf, 0x55, 0x01, 0x82, 0x2d};
+  OPENSSL_memcpy(out->oid, kOIDSM2_P256, sizeof(kOIDSM2_P256));
+  out->oid_len = sizeof(kOIDSM2_P256);
 
-  ec_group_init_static_mont(&out->field, OPENSSL_ARRAY_SIZE(kP224Field),
-                            kP224Field, kP224FieldRR, kP224FieldN0);
-  ec_group_init_static_mont(&out->order, OPENSSL_ARRAY_SIZE(kP224Order),
-                            kP224Order, kP224OrderRR, kP224OrderN0);
+  ec_group_init_static_mont(&out->field, OPENSSL_ARRAY_SIZE(kSM2_256Field),
+                            kSM2_256Field, kSM2_256FieldRR, kSM2_256FieldN0);
+  ec_group_init_static_mont(&out->order, OPENSSL_ARRAY_SIZE(kSM2_256Order),
+                            kSM2_256Order, kSM2_256OrderRR, kSM2_256OrderN0);
 
-#if defined(BORINGSSL_HAS_UINT128) && !defined(OPENSSL_SMALL)
-  out->meth = EC_GFp_nistp224_method();
-  OPENSSL_memcpy(out->generator.raw.X.words, kP224GX, sizeof(kP224GX));
-  OPENSSL_memcpy(out->generator.raw.Y.words, kP224GY, sizeof(kP224GY));
-  out->generator.raw.Z.words[0] = 1;
-  OPENSSL_memcpy(out->b.words, kP224B, sizeof(kP224B));
-#else
+
   out->meth = EC_GFp_mont_method();
-  OPENSSL_memcpy(out->generator.raw.X.words, kP224MontGX, sizeof(kP224MontGX));
-  OPENSSL_memcpy(out->generator.raw.Y.words, kP224MontGY, sizeof(kP224MontGY));
-  OPENSSL_memcpy(out->generator.raw.Z.words, kP224FieldR, sizeof(kP224FieldR));
-  OPENSSL_memcpy(out->b.words, kP224MontB, sizeof(kP224MontB));
-#endif
+  OPENSSL_memcpy(out->generator.raw.X.words, kSM2_256MontGX, sizeof(kSM2_256MontGX));
+  OPENSSL_memcpy(out->generator.raw.Y.words, kSM2_256MontGY, sizeof(kSM2_256MontGY));
+  OPENSSL_memcpy(out->generator.raw.Z.words, kSM2_256FieldR, sizeof(kSM2_256FieldR));
+  OPENSSL_memcpy(out->b.words, kSM2_256MontB, sizeof(kSM2_256MontB));
   out->generator.group = out;
 
   ec_group_set_a_minus3(out);
   out->has_order = 1;
   out->field_greater_than_order = 1;
-
 }
 
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
