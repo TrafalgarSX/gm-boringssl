@@ -301,6 +301,40 @@ const EVP_PKEY_ASN1_METHOD ec_asn1_meth = {
     int_ec_free,
 };
 
+#if !defined(OPENSSL_NO_SM2)
+const EVP_PKEY_ASN1_METHOD sm2_asn1_meth = {
+    EVP_PKEY_SM2,
+    // 1.2.156.10197.1.301
+    {0x2a, 0x81, 0x1c, 0xcf, 0x55, 0x01, 0x82, 0x2d},
+    9,
+    &sm2_pkey_meth,
+
+    eckey_pub_decode,
+    eckey_pub_encode,
+    eckey_pub_cmp,
+
+    eckey_priv_decode,
+    eckey_priv_encode,
+
+    /*set_priv_raw=*/NULL,
+    /*set_pub_raw=*/NULL,
+    /*get_priv_raw=*/NULL,
+    /*get_pub_raw=*/NULL,
+    eckey_set1_tls_encodedpoint,
+    eckey_get1_tls_encodedpoint,
+
+    eckey_opaque,
+
+    int_ec_size,
+    ec_bits,
+
+    ec_missing_parameters,
+    ec_copy_parameters,
+    ec_cmp_parameters,
+
+    int_ec_free,
+};
+#endif
 
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key) {
   if (EVP_PKEY_assign_EC_KEY(pkey, key)) {

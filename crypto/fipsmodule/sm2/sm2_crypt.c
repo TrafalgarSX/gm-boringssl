@@ -23,17 +23,150 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/mem.h>
+#include <openssl/base.h>
+#include <openssl/bytestring.h>
 #include <openssl/ecdh.h>
 #include <string.h>
 
-typedef struct SM2_Ciphertext_st SM2_Ciphertext;
+#include "../crypto/internal.h"
 
+#define BN_SENSITIVE    1
+
+
+
+typedef struct SM2_Ciphertext_st SM2_Ciphertext;
+DECLARE_ASN1_FUNCTIONS(SM2_Ciphertext)
 struct SM2_Ciphertext_st {
     BIGNUM *C1x;
     BIGNUM *C1y;
-    ASN1_OCTET_STRING *C3;
-    ASN1_OCTET_STRING *C2;
+    uint8_t C3[32]; // C3 is a 32-byte hash
+    uint8_t *C2; // C2 is the encrypted message
+    size_t C2_len; // Length of C2
 };
+
+SM2_Ciphertext *SM2_Ciphertext_new(void)
+{
+    SM2_Ciphertext *ctext = OPENSSL_zalloc(sizeof(SM2_Ciphertext));
+    if (ctext == NULL) {
+        OPENSSL_PUT_ERROR(SM2, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    ctext->C1x = BN_new();
+    ctext->C1y = BN_new();
+    ctext->C2 = NULL;
+    ctext->C2_len = 0;
+    OPENSSL_memset(ctext->C3, 0, sizeof(ctext->C3)); // Initialize C3 to zero
+
+    if (ctext->C1x == NULL || ctext->C1y == NULL) {
+        SM2_Ciphertext_free(ctext);
+        return NULL;
+    }
+
+    return ctext;
+}
+
+void SM2_Ciphertext_free(SM2_Ciphertext *ctext)
+{
+    if (ctext == NULL)
+        return;
+
+    BN_free(ctext->C1x);
+    BN_free(ctext->C1y);
+    OPENSSL_free(ctext->C2); // Free C2 if it was allocated
+    ctext->C2 = NULL; // Avoid dangling pointer
+    OPENSSL_free(ctext);
+}
+
+SM2_Ciphertext *d2i_SM2_Ciphertext(SM2_Ciphertext **out, const uint8_t **in, long len)
+{
+    if (out == NULL || in == NULL || *in == NULL || len <= 0) return 0;
+
+    CBS cbs;
+    CBS_init(&cbs, *in, len);
+
+    SM2_Ciphertext *ctext = SM2_Ciphertext_new();
+    if (!ctext) return 0;
+
+    CBS seq, c3_cbs, c2_cbs;
+    if (!CBS_get_asn1(&cbs, &seq, CBS_ASN1_SEQUENCE)) return 0;
+
+    if(!BN_parse_asn1_unsigned(&seq, ctext->C1x) || 
+       !BN_parse_asn1_unsigned(&seq, ctext->C1y) ||
+       !CBS_get_asn1(&seq, &c3_cbs, CBS_ASN1_OCTETSTRING) ||
+       !CBS_get_asn1(&seq, &c2_cbs, CBS_ASN1_OCTETSTRING)) {
+        return 0;
+    }
+
+    OPENSSL_memcpy(ctext->C3, CBS_data(&c3_cbs), OPENSSL_ARRAY_SIZE(ctext->C3));
+    if (CBS_len(&c3_cbs) != OPENSSL_ARRAY_SIZE(ctext->C3)) {
+        OPENSSL_PUT_ERROR(SM2, SM2_R_INVALID_ENCODING);
+        SM2_Ciphertext_free(ctext);
+        return NULL;
+    }
+
+    ctext->C2_len = CBS_len(&c2_cbs);
+    ctext->C2 = OPENSSL_memdup(CBS_data(&c2_cbs), ctext->C2_len);
+
+    if(out != NULL) {
+        if (*out != NULL) {
+            SM2_Ciphertext_free(*out);
+        }
+        *out = ctext;
+    }
+
+    *in = CBS_data(&cbs);
+    return ctext;
+}
+
+int i2d_SM2_Ciphertext(SM2_Ciphertext *in, uint8_t **outp)
+{
+
+    if (!in || !outp) return 0;
+
+    CBB cbb, seq, c3, c2;
+    uint8_t *buf = NULL;
+    size_t len = 0;
+
+    if (!CBB_init(&cbb, 0) ||
+        !CBB_add_asn1(&cbb, &seq, CBS_ASN1_SEQUENCE)) {
+        CBB_cleanup(&cbb);
+        return 0;
+    }
+
+    if(!BN_marshal_asn1(&cbb, in->C1x) ||
+       !BN_marshal_asn1(&cbb, in->C1y)) {
+        CBB_cleanup(&cbb);
+        return 0;
+    }
+
+
+    // C3
+    if (!CBB_add_asn1(&seq, &c3, CBS_ASN1_OCTETSTRING) ||
+        !CBB_add_bytes(&c3, in->C3, OPENSSL_ARRAY_SIZE(in->C3))) {
+        CBB_cleanup(&cbb); return 0;
+    }
+
+    // C2
+    if (!CBB_add_asn1(&seq, &c2, CBS_ASN1_OCTETSTRING) ||
+        !CBB_add_bytes(&c2, in->C2, in->C2_len)) {
+        CBB_cleanup(&cbb); return 0;
+    }
+
+    if (!CBB_finish(&cbb, &buf, &len)) {
+        CBB_cleanup(&cbb); return 0;
+    }
+
+    if (*outp) {
+        memcpy(*outp, buf, len);
+        OPENSSL_free(buf);
+    } else {
+        *outp = buf;
+    }
+    return (int)len;
+}
+
+
 
 
 static size_t ec_field_size(const EC_GROUP *group)
@@ -82,7 +215,7 @@ int ossl_sm2_plaintext_size(const unsigned char *ct, size_t ct_size,
         return 0;
     }
 
-    *pt_size = sm2_ctext->C2->length;
+    *pt_size = sm2_ctext->C2_len;
     SM2_Ciphertext_free(sm2_ctext);
 
     return 1;
@@ -135,8 +268,7 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     const int C3_size = EVP_MD_size(digest);
 
     /* NULL these before any "goto done" */
-    ctext_struct.C2 = NULL;
-    ctext_struct.C3 = NULL;
+    OPENSSL_memset(&ctext_struct, 0, sizeof(ctext_struct));
 
     if (hash == NULL || C3_size <= 0) {
         OPENSSL_PUT_ERROR(SM2, ERR_R_INTERNAL_ERROR);
@@ -231,16 +363,18 @@ again:
 
     ctext_struct.C1x = x1;
     ctext_struct.C1y = y1;
-    ctext_struct.C3 = ASN1_OCTET_STRING_new();
-    ctext_struct.C2 = ASN1_OCTET_STRING_new();
 
-    if (ctext_struct.C3 == NULL || ctext_struct.C2 == NULL) {
+    if (ctext_struct.C2 == NULL) {
        OPENSSL_PUT_ERROR(SM2, ERR_R_ASN1_LIB);
        goto done;
     }
-    if (!ASN1_OCTET_STRING_set(ctext_struct.C3, C3, C3_size)
-            || !ASN1_OCTET_STRING_set(ctext_struct.C2, msg_mask, msg_len)) {
-        OPENSSL_PUT_ERROR(SM2, ERR_R_INTERNAL_ERROR);
+
+    OPENSSL_memcpy(ctext_struct.C3, C3, C3_size);
+    ctext_struct.C2_len = msg_len;
+    ctext_struct.C2 = OPENSSL_memdup(msg_mask, msg_len);
+
+    if( ctext_struct.C2 == NULL) {
+        OPENSSL_PUT_ERROR(SM2, ERR_R_MALLOC_FAILURE);
         goto done;
     }
 
@@ -255,8 +389,7 @@ again:
     rc = 1;
 
  done:
-    ASN1_OCTET_STRING_free(ctext_struct.C2);
-    ASN1_OCTET_STRING_free(ctext_struct.C3);
+    OPENSSL_free(ctext_struct.C2);
     OPENSSL_free(msg_mask);
     OPENSSL_free(x2y2);
     OPENSSL_free(C3);
@@ -302,14 +435,9 @@ int ossl_sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
-    if (sm2_ctext->C3->length != hash_size) {
-        OPENSSL_PUT_ERROR(SM2, SM2_R_INVALID_ENCODING);
-        goto done;
-    }
-
-    C2 = sm2_ctext->C2->data;
-    C3 = sm2_ctext->C3->data;
-    msg_len = sm2_ctext->C2->length;
+    C2 = sm2_ctext->C2;
+    C3 = sm2_ctext->C3;
+    msg_len = sm2_ctext->C2_len;
     if (*ptext_len < (size_t)msg_len) {
         OPENSSL_PUT_ERROR(SM2, SM2_R_BUFFER_TOO_SMALL);
         goto done;

@@ -73,6 +73,10 @@ set(
   crypto/fipsmodule/ec/simple_mul.c
   crypto/fipsmodule/ec/util.c
   crypto/fipsmodule/ec/wnaf.c
+  crypto/fipsmodule/sm2/sm2_crypt.c
+  crypto/fipsmodule/sm2/sm2_sign.c
+  crypto/fipsmodule/sm2/sm2_key.c
+  crypto/fipsmodule/sm2/ecdh_kdf.c
   crypto/fipsmodule/ecdh/ecdh.c
   crypto/fipsmodule/ecdsa/ecdsa.c
   crypto/fipsmodule/hkdf/hkdf.c
@@ -375,7 +379,6 @@ set(
   crypto/evp/p_x25519.c
   crypto/evp/p_x25519_asn1.c
   crypto/evp/p_sm2.c
-  crypto/evp/p_sm2_asn1.c
   crypto/evp/pbkdf.c
   crypto/evp/print.c
   crypto/evp/scrypt.c

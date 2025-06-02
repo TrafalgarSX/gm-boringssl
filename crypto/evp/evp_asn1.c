@@ -340,8 +340,10 @@ int i2d_PublicKey(const EVP_PKEY *key, uint8_t **outp) {
       return i2d_RSAPublicKey(EVP_PKEY_get0_RSA(key), outp);
     case EVP_PKEY_DSA:
       return i2d_DSAPublicKey(EVP_PKEY_get0_DSA(key), outp);
+    case EVP_PKEY_SM2:
     case EVP_PKEY_EC:
       return i2o_ECPublicKey(EVP_PKEY_get0_EC_KEY(key), outp);
+    //   return i2o_SM2PublicKey(EVP_PKEY_get0_SM2(key), outp);
     default:
       OPENSSL_PUT_ERROR(EVP, EVP_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
       return -1;
