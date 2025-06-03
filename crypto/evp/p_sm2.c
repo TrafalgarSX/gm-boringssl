@@ -28,6 +28,10 @@ typedef struct {
     const EVP_MD *md;
     /* Key and paramgen group */
     EC_GROUP *gen_group;
+    /* z */
+    uint8_t z[EVP_MAX_MD_SIZE];
+    uint8_t *user_id; /* User ID for SM2 */
+    size_t user_id_len; /* Length of User ID */
 } SM2_PKEY_CTX;
 
 static int pkey_sm2_init(EVP_PKEY_CTX *ctx)
@@ -50,6 +54,7 @@ static void pkey_sm2_cleanup(EVP_PKEY_CTX *ctx)
     if (dctx != NULL) {
         EC_GROUP_free(dctx->gen_group);
         OPENSSL_free(dctx);
+        OPENSSL_free(dctx->user_id);
         ctx->data = NULL;
     }
 }
@@ -180,6 +185,8 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_GET_MD:
         *(const EVP_MD **)p2 = dctx->md;
         return 1;
+    case EVP_PKEY_CTRL_SET_SM2_USERID:
+
 
     default:
         return -2;
@@ -205,6 +212,14 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
     return 0;
   }
   EVP_PKEY_assign_SM2_KEY(pkey, ec);
+
+  if (dctx->md == NULL) {
+      dctx->md = EVP_sm3();
+  }
+  if (!ossl_sm2_compute_z_digest(dctx->z, dctx->md, dctx->user_id, dctx->user_id_len, ec)) {
+      OPENSSL_PUT_ERROR(SM2, SM2_R_COMPUTE_Z_FAILED);
+      return 0;
+  }
   return 1;
 }
 
