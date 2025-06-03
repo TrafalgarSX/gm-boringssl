@@ -80,7 +80,7 @@ void SM2_Ciphertext_free(SM2_Ciphertext *ctext)
 
 SM2_Ciphertext *d2i_SM2_Ciphertext(SM2_Ciphertext **out, const uint8_t **in, long len)
 {
-    if (out == NULL || in == NULL || *in == NULL || len <= 0) return 0;
+    if (in == NULL || *in == NULL || len <= 0) return 0;
 
     CBS cbs;
     CBS_init(&cbs, *in, len);
@@ -134,8 +134,8 @@ int i2d_SM2_Ciphertext(SM2_Ciphertext *in, uint8_t **outp)
         return 0;
     }
 
-    if(!BN_marshal_asn1(&cbb, in->C1x) ||
-       !BN_marshal_asn1(&cbb, in->C1y)) {
+    if(!BN_marshal_asn1(&seq, in->C1x) ||
+       !BN_marshal_asn1(&seq, in->C1y)) {
         CBB_cleanup(&cbb);
         return 0;
     }
@@ -364,11 +364,6 @@ again:
     ctext_struct.C1x = x1;
     ctext_struct.C1y = y1;
 
-    if (ctext_struct.C2 == NULL) {
-       OPENSSL_PUT_ERROR(SM2, ERR_R_ASN1_LIB);
-       goto done;
-    }
-
     OPENSSL_memcpy(ctext_struct.C3, C3, C3_size);
     ctext_struct.C2_len = msg_len;
     ctext_struct.C2 = OPENSSL_memdup(msg_mask, msg_len);
@@ -377,7 +372,6 @@ again:
         OPENSSL_PUT_ERROR(SM2, ERR_R_MALLOC_FAILURE);
         goto done;
     }
-
     ciphertext_leni = i2d_SM2_Ciphertext(&ctext_struct, &ciphertext_buf);
     /* Ensure cast to size_t is safe */
     if (ciphertext_leni < 0) {
@@ -394,6 +388,7 @@ again:
     OPENSSL_free(x2y2);
     OPENSSL_free(C3);
     EVP_MD_CTX_free(hash);
+    BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
     EC_POINT_free(kP);
@@ -527,6 +522,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     OPENSSL_free(x2y2);
     OPENSSL_free(computed_C3);
     EC_POINT_free(C1);
+    BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     SM2_Ciphertext_free(sm2_ctext);
     EVP_MD_CTX_free(hash);

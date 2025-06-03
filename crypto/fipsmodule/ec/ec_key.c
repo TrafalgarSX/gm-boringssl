@@ -76,6 +76,8 @@
 #include <openssl/ex_data.h>
 #include <openssl/mem.h>
 #include <openssl/thread.h>
+#include <openssl/obj.h>
+#include <openssl/sm2.h>
 
 #include "internal.h"
 #include "../delocate.h"
@@ -288,7 +290,7 @@ point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key) {
 void EC_KEY_set_conv_form(EC_KEY *key, point_conversion_form_t cform) {
   key->conv_form = cform;
 }
-// TODO guoyawen check sm2 private key ?
+
 int EC_KEY_check_key(const EC_KEY *eckey) {
   if (!eckey || !eckey->group || !eckey->pub_key) {
     OPENSSL_PUT_ERROR(EC, ERR_R_PASSED_NULL_PARAMETER);
@@ -304,6 +306,11 @@ int EC_KEY_check_key(const EC_KEY *eckey) {
   if (!EC_POINT_is_on_curve(eckey->group, eckey->pub_key, NULL)) {
     OPENSSL_PUT_ERROR(EC, EC_R_POINT_IS_NOT_ON_CURVE);
     return 0;
+  }
+
+  // check sm2 private key in [1, n-1)
+  if(eckey->group->curve_name == NID_sm2) {
+    ossl_sm2_key_private_check(eckey);
   }
 
   // Check the public and private keys match.

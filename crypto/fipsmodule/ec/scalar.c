@@ -52,8 +52,7 @@ int ec_scalar_is_zero(const EC_GROUP *group, const EC_SCALAR *a) {
 
 int ec_random_nonzero_scalar(const EC_GROUP *group, EC_SCALAR *out,
                              const uint8_t additional_data[32]) {
-  int sm2 = group->curve_name == NID_sm2;
-  if(sm2) {
+  if(group->curve_name == NID_sm2) {
     /* range of SM2 private key is [1, n-1) */
     BIGNUM *order = BN_new();
     if (order == NULL || !BN_sub(order, &group->order.N, BN_value_one())) {

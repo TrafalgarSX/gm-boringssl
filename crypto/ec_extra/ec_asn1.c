@@ -183,7 +183,7 @@ EC_KEY *EC_KEY_parse_private_key(CBS *cbs, const EC_GROUP *group) {
     goto err;
   }
 
-  // Ensure the resulting key is valid.
+  // Ensure the resulting key is valid.  前面的 EC_KEY_set_private_key 检验了私钥的大小，但是不支持 sm2 的情况
   if (!EC_KEY_check_key(ret)) {
     goto err;
   }

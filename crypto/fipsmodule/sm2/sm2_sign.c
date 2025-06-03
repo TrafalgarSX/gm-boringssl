@@ -308,7 +308,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         BN_free(r);
         BN_free(s);
     }
-
+    BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
     return sig;
@@ -436,6 +436,80 @@ int ossl_sm2_do_verify(const EC_KEY *key,
  done:
     BN_free(e);
     return ret;
+}
+
+// TODO id id_len parameters are not used in this function
+int ossl_sm2_internal_sign_message(const uint8_t *msg, int msglen,
+                           uint8_t *sig, unsigned int *siglen,
+                           EC_KEY *eckey)
+{
+    BIGNUM *e = NULL;
+    ECDSA_SIG *s = NULL;
+    int sigleni;
+    int ret = -1;
+
+    if (sig == NULL) {
+        OPENSSL_PUT_ERROR(SM2, ERR_R_PASSED_NULL_PARAMETER);
+        goto done;
+    }
+
+    s = ossl_sm2_do_sign(eckey, EVP_sm3(), NULL, 0, msg, msglen);
+    if (s == NULL) {
+        OPENSSL_PUT_ERROR(SM2, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
+
+    sigleni = i2d_ECDSA_SIG(s, &sig);
+    if (sigleni < 0) {
+       OPENSSL_PUT_ERROR(SM2, ERR_R_INTERNAL_ERROR);
+       goto done;
+    }
+    *siglen = (unsigned int)sigleni;
+
+    ret = 1;
+
+ done:
+    ECDSA_SIG_free(s);
+    BN_free(e);
+    return ret;
+}
+
+// TODO
+int ossl_sm2_internal_verify_message(const uint8_t *msg, int msg_len,
+                             const unsigned char *sig, int sig_len,
+                             EC_KEY *eckey)
+{
+    ECDSA_SIG *s = NULL;
+    BIGNUM *e = NULL;
+    const unsigned char *p = sig;
+    unsigned char *der = NULL;
+    int derlen = -1;
+    int ret = -1;
+
+    s = ECDSA_SIG_new();
+    if (s == NULL) {
+        OPENSSL_PUT_ERROR(SM2, ERR_R_ECDSA_LIB);
+        goto done;
+    }
+    if (d2i_ECDSA_SIG(&s, &p, sig_len) == NULL) {
+        OPENSSL_PUT_ERROR(SM2, SM2_R_INVALID_ENCODING);
+        goto done;
+    }
+    /* Ensure signature uses DER and doesn't have trailing garbage */
+    derlen = i2d_ECDSA_SIG(s, &der);
+    if (derlen != sig_len || memcmp(sig, der, derlen) != 0) {
+        OPENSSL_PUT_ERROR(SM2, SM2_R_INVALID_ENCODING);
+        goto done;
+    }
+
+    ret = ossl_sm2_do_verify(eckey, EVP_sm3(), s, NULL, 0, msg, msg_len);
+
+ done:
+    OPENSSL_free(der);
+    BN_free(e);
+    ECDSA_SIG_free(s);
+    return ret;
+
 }
 
 int ossl_sm2_internal_sign(const unsigned char *dgst, int dgstlen,
