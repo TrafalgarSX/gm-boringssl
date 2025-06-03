@@ -7,8 +7,6 @@
 #include <openssl/evp.h>
 #include <openssl/mem.h>
 
-#include "../../test/test_util.h"
-
 /*
 Title = SM2 tests
 
@@ -52,6 +50,123 @@ Result = KEYOP_MISMATCH
 static const unsigned char kMsg[] = { 1, 2, 3, 4 };
 
 TEST(SM2Test, test_sm2) {
+    int ret = 0;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY *params = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY_CTX *kctx = NULL;
+    size_t sig_len = 0;
+    unsigned char *sig = NULL;
+    EVP_MD_CTX *md_ctx = NULL;
+    EVP_MD_CTX *md_ctx_verify = NULL;
+    EVP_PKEY_CTX *cctx = NULL;
+
+    uint8_t ciphertext[128];
+    size_t ctext_len = sizeof(ciphertext);
+
+    uint8_t plaintext[8];
+    size_t ptext_len = sizeof(plaintext);
+
+    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_SM2, NULL);
+    ASSERT_TRUE(pctx != NULL);
+
+    if (!EVP_PKEY_paramgen_init(pctx))
+        goto done;
+
+    if (!EVP_PKEY_CTX_set_sm2_paramgen_curve_nid(pctx, NID_sm2))
+        goto done;
+
+    if (!EVP_PKEY_paramgen(pctx, &params))
+        goto done;
+
+    kctx = EVP_PKEY_CTX_new(params, NULL);
+    if (!kctx)
+        goto done;
+
+    if (!EVP_PKEY_keygen_init(kctx))
+        goto done;
+
+    if (!EVP_PKEY_keygen(kctx, &pkey))
+        goto done;
+
+    if (!EVP_PKEY_set_type(pkey, EVP_PKEY_SM2))
+        goto done;
+
+    md_ctx = EVP_MD_CTX_new();
+    if (!md_ctx)
+        goto done;
+    md_ctx_verify = EVP_MD_CTX_new();
+    if (!md_ctx_verify)
+        goto done;
+
+    if (!EVP_DigestSignInit(md_ctx, NULL, EVP_sm3(), NULL, pkey))
+        goto done;
+
+    if(!EVP_DigestSignUpdate(md_ctx, kMsg, sizeof(kMsg)))
+        goto done;
+
+    /* Determine the size of the signature. */
+    if (!EVP_DigestSignFinal(md_ctx, NULL, &sig_len))
+        goto done;
+
+    if (!(sig_len == (size_t)EVP_PKEY_size(pkey)))
+        goto done;
+
+    sig = (uint8_t *)OPENSSL_malloc(sig_len);
+    if (!sig)
+        goto done;
+
+    if (!EVP_DigestSignFinal(md_ctx, sig, &sig_len))
+        goto done;
+
+    /* Ensure that the signature round-trips. */
+
+    if (!EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sm3(), NULL, pkey))
+        goto done;
+
+    if (!EVP_DigestVerifyUpdate(md_ctx_verify, kMsg, sizeof(kMsg)))
+        goto done;
+
+    if (!EVP_DigestVerifyFinal(md_ctx_verify, sig, sig_len))
+        goto done;
+
+    /* now check encryption/decryption */
+    cctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (!cctx)
+        goto done;
+
+    if (!EVP_PKEY_encrypt_init(cctx))
+        goto done;
+
+    if (!EVP_PKEY_encrypt(cctx, ciphertext, &ctext_len, kMsg, sizeof(kMsg)))
+        goto done;
+
+    if (!EVP_PKEY_decrypt_init(cctx))
+        goto done;
+
+    if (!EVP_PKEY_decrypt(cctx, plaintext, &ptext_len, ciphertext, ctext_len))
+        goto done;
+
+    if (!(ptext_len == sizeof(kMsg)))
+        goto done;
+
+    if (!(memcmp(plaintext, kMsg, sizeof(kMsg)) == 0))
+        goto done;
+
+    ret = 1;
+done:
+    EVP_PKEY_CTX_free(pctx);
+    EVP_PKEY_CTX_free(kctx);
+    EVP_PKEY_CTX_free(cctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(params);
+    EVP_MD_CTX_free(md_ctx);
+    EVP_MD_CTX_free(md_ctx_verify);
+    OPENSSL_free(sig);
+    std::cout << "SM2 test result: " << (ret ? "PASS" : "FAIL") << std::endl;
+}
+
+TEST(SM2Test, test_sm2_vector) {
     int ret = 0;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY *params = NULL;

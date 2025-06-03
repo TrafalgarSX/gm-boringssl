@@ -245,6 +245,8 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key) {
       return EVP_PKEY_assign_DSA(pkey, key);
     case EVP_PKEY_EC:
       return EVP_PKEY_assign_EC_KEY(pkey, key);
+    case EVP_PKEY_SM2:
+      return EVP_PKEY_assign_SM2_KEY(pkey, key);
     case EVP_PKEY_DH:
       return EVP_PKEY_assign_DH(pkey, key);
   }

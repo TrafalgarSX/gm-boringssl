@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/evp.h>
 #include <openssl/asn1t.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
@@ -23,10 +24,10 @@
 /* EC pkey context structure */
 
 typedef struct {
-    /* Key and paramgen group */
-    EC_GROUP *gen_group;
     /* message digest */
     const EVP_MD *md;
+    /* Key and paramgen group */
+    EC_GROUP *gen_group;
 } SM2_PKEY_CTX;
 
 static int pkey_sm2_init(EVP_PKEY_CTX *ctx)
@@ -186,12 +187,49 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     }
 }
 
+static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
+  SM2_PKEY_CTX *dctx = ctx->data;
+  const EC_GROUP *group = dctx->gen_group;
+  if (group == NULL) {
+    if (ctx->pkey == NULL) {
+      OPENSSL_PUT_ERROR(EVP, EVP_R_NO_PARAMETERS_SET);
+      return 0;
+    }
+    group = EC_KEY_get0_group(ctx->pkey->pkey);
+  }
+  EC_KEY *ec = EC_KEY_new();
+  if (ec == NULL ||
+      !EC_KEY_set_group(ec, group) ||
+      !EC_KEY_generate_key(ec)) {
+    EC_KEY_free(ec);
+    return 0;
+  }
+  EVP_PKEY_assign_SM2_KEY(pkey, ec);
+  return 1;
+}
+
+static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
+  SM2_PKEY_CTX *dctx = ctx->data;
+  if (dctx->gen_group == NULL) {
+    OPENSSL_PUT_ERROR(EVP, EVP_R_NO_PARAMETERS_SET);
+    return 0;
+  }
+  EC_KEY *ec = EC_KEY_new();
+  if (ec == NULL ||
+      !EC_KEY_set_group(ec, dctx->gen_group)) {
+    EC_KEY_free(ec);
+    return 0;
+  }
+  EVP_PKEY_assign_SM2_KEY(pkey, ec);
+  return 1;
+}
+
 const EVP_PKEY_METHOD sm2_pkey_meth = {
     EVP_PKEY_SM2,
     pkey_sm2_init,
     pkey_sm2_copy,
     pkey_sm2_cleanup,
-    NULL, // keygen not supported
+    pkey_ec_keygen, // keygen not supported
     pkey_sm2_sign,
     NULL, // sign_message not supported
     pkey_sm2_verify,
@@ -200,6 +238,12 @@ const EVP_PKEY_METHOD sm2_pkey_meth = {
     pkey_sm2_encrypt,
     pkey_sm2_decrypt,
     NULL, // derive not supported
-    NULL, // paramgen not supported
+    pkey_ec_paramgen, // paramgen not supported
     pkey_sm2_ctrl,
 };
+
+int EVP_PKEY_CTX_set_sm2_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid) {
+  return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_SM2, EVP_PKEY_OP_TYPE_GEN,
+                           EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID, nid, NULL);
+}
+

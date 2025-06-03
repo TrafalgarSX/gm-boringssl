@@ -571,3 +571,7 @@ size_t EC_get_builtin_curves(EC_builtin_curve *out_curves,
   }
   return OPENSSL_ARRAY_SIZE(kAllGroups);
 }
+
+int EC_KEY_get_group_curvname(const EC_GROUP *group) {
+  return group->curve_name;
+}

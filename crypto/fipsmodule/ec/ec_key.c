@@ -288,7 +288,7 @@ point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key) {
 void EC_KEY_set_conv_form(EC_KEY *key, point_conversion_form_t cform) {
   key->conv_form = cform;
 }
-
+// TODO guoyawen check sm2 private key ?
 int EC_KEY_check_key(const EC_KEY *eckey) {
   if (!eckey || !eckey->group || !eckey->pub_key) {
     OPENSSL_PUT_ERROR(EC, ERR_R_PASSED_NULL_PARAMETER);

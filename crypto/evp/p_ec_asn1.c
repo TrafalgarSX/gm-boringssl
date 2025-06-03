@@ -69,13 +69,23 @@ static int eckey_pub_encode(CBB *out, const EVP_PKEY *key) {
   const EC_KEY *ec_key = key->pkey;
   const EC_GROUP *group = EC_KEY_get0_group(ec_key);
   const EC_POINT *public_key = EC_KEY_get0_public_key(ec_key);
+  const uint8_t *oidptr = NULL;
+  uint8_t oid_len;
+
+  if(key->type != EVP_PKEY_SM2) {
+    oidptr = ec_asn1_meth.oid;
+    oid_len = ec_asn1_meth.oid_len;
+  } else {
+    oidptr = sm2_asn1_meth.oid;
+    oid_len = sm2_asn1_meth.oid_len;
+  }
 
   // See RFC 5480, section 2.
   CBB spki, algorithm, oid, key_bitstring;
   if (!CBB_add_asn1(out, &spki, CBS_ASN1_SEQUENCE) ||
       !CBB_add_asn1(&spki, &algorithm, CBS_ASN1_SEQUENCE) ||
       !CBB_add_asn1(&algorithm, &oid, CBS_ASN1_OBJECT) ||
-      !CBB_add_bytes(&oid, ec_asn1_meth.oid, ec_asn1_meth.oid_len) ||
+      !CBB_add_bytes(&oid, oidptr, oid_len) ||
       !EC_KEY_marshal_curve_name(&algorithm, group) ||
       !CBB_add_asn1(&spki, &key_bitstring, CBS_ASN1_BITSTRING) ||
       !CBB_add_u8(&key_bitstring, 0 /* padding */) ||
@@ -107,7 +117,13 @@ static int eckey_pub_decode(EVP_PKEY *out, CBS *params, CBS *key) {
     goto err;
   }
 
-  EVP_PKEY_assign_EC_KEY(out, eckey);
+  if(EC_KEY_get_group_curvname(group) != NID_sm2) {
+    EVP_PKEY_assign_EC_KEY(out, eckey);
+  }else{
+    // For SM2, we use a different key type.
+    EVP_PKEY_assign_SM2_KEY(out, eckey);
+  }
+
   return 1;
 
 err:
@@ -146,7 +162,14 @@ static int eckey_priv_decode(EVP_PKEY *out, CBS *params, CBS *key) {
     return 0;
   }
 
-  EVP_PKEY_assign_EC_KEY(out, ec_key);
+  if(EC_KEY_get_group_curvname(group) != NID_sm2) {
+    // For non-SM2 keys, we use the standard EC key type.
+    EVP_PKEY_assign_EC_KEY(out, ec_key);
+  } else {
+    // For SM2 keys, we use a different key type.
+    EVP_PKEY_assign_SM2_KEY(out, ec_key);
+  }
+
   return 1;
 }
 
@@ -158,14 +181,23 @@ static int eckey_priv_encode(CBB *out, const EVP_PKEY *key) {
   // means. Both OpenSSL and NSS omit the redundant parameters, so we omit them
   // as well.
   unsigned enc_flags = EC_KEY_get_enc_flags(ec_key) | EC_PKEY_NO_PARAMETERS;
+  const uint8_t *oidptr = NULL;
+  uint8_t oid_len;
 
+  if(key->type != EVP_PKEY_SM2) {
+    oidptr = ec_asn1_meth.oid;
+    oid_len = ec_asn1_meth.oid_len;
+  } else {
+    oidptr = sm2_asn1_meth.oid;
+    oid_len = sm2_asn1_meth.oid_len;
+  }
   // See RFC 5915.
   CBB pkcs8, algorithm, oid, private_key;
   if (!CBB_add_asn1(out, &pkcs8, CBS_ASN1_SEQUENCE) ||
       !CBB_add_asn1_uint64(&pkcs8, 0 /* version */) ||
       !CBB_add_asn1(&pkcs8, &algorithm, CBS_ASN1_SEQUENCE) ||
       !CBB_add_asn1(&algorithm, &oid, CBS_ASN1_OBJECT) ||
-      !CBB_add_bytes(&oid, ec_asn1_meth.oid, ec_asn1_meth.oid_len) ||
+      !CBB_add_bytes(&oid, oidptr, oid_len) ||
       !EC_KEY_marshal_curve_name(&algorithm, EC_KEY_get0_group(ec_key)) ||
       !CBB_add_asn1(&pkcs8, &private_key, CBS_ASN1_OCTETSTRING) ||
       !EC_KEY_marshal_private_key(&private_key, ec_key, enc_flags) ||
@@ -344,8 +376,22 @@ int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key) {
   return 0;
 }
 
+int EVP_PKEY_set1_SM2_KEY(EVP_PKEY *pkey, EC_KEY *key) {
+    if (EVP_PKEY_assign_SM2_KEY(pkey, key)) {
+      EC_KEY_up_ref(key);
+      return 1;
+    }
+    return 0;
+}
+
 int EVP_PKEY_assign_EC_KEY(EVP_PKEY *pkey, EC_KEY *key) {
   evp_pkey_set_method(pkey, &ec_asn1_meth);
+  pkey->pkey = key;
+  return key != NULL;
+}
+
+int EVP_PKEY_assign_SM2_KEY(EVP_PKEY *pkey, EC_KEY *key) {
+  evp_pkey_set_method(pkey, &sm2_asn1_meth);
   pkey->pkey = key;
   return key != NULL;
 }
@@ -360,6 +406,22 @@ EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey) {
 
 EC_KEY *EVP_PKEY_get1_EC_KEY(const EVP_PKEY *pkey) {
   EC_KEY *ec_key = EVP_PKEY_get0_EC_KEY(pkey);
+  if (ec_key != NULL) {
+    EC_KEY_up_ref(ec_key);
+  }
+  return ec_key;
+}
+
+EC_KEY *EVP_PKEY_get0_SM2_KEY(const EVP_PKEY *pkey) {
+  if (pkey->type != EVP_PKEY_SM2) {
+    OPENSSL_PUT_ERROR(EVP, EVP_R_EXPECTING_AN_EC_KEY_KEY);
+    return NULL;
+  }
+  return pkey->pkey;
+}
+
+EC_KEY *EVP_PKEY_get1_SM2_KEY(const EVP_PKEY *pkey) {
+  EC_KEY *ec_key = EVP_PKEY_get0_SM2_KEY(pkey);
   if (ec_key != NULL) {
     EC_KEY_up_ref(ec_key);
   }

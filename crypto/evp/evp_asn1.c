@@ -219,6 +219,15 @@ static EVP_PKEY *old_priv_decode(CBS *cbs, int type) {
       }
       return ret;
     }
+    case EVP_PKEY_SM2: {
+      // TODO guoyawen
+      EC_KEY *ec_key = EC_KEY_parse_private_key(cbs, NULL);
+      if (ec_key == NULL || !EVP_PKEY_assign_SM2_KEY(ret, ec_key)) {
+        EC_KEY_free(ec_key);
+        goto err;
+      }
+      return ret;
+    }
     case EVP_PKEY_DSA: {
       DSA *dsa = DSA_parse_private_key(cbs);
       if (dsa == NULL || !EVP_PKEY_assign_DSA(ret, dsa)) {
