@@ -61,7 +61,7 @@ int ossl_sm2_compute_z_digest(uint8_t *out,
         OPENSSL_PUT_ERROR(SM2, ERR_R_BN_LIB);
         goto done;
     }
-
+    BN_CTX_start(ctx);
     p = BN_CTX_get(ctx);
     a = BN_CTX_get(ctx);
     b = BN_CTX_get(ctx);
@@ -143,6 +143,7 @@ int ossl_sm2_compute_z_digest(uint8_t *out,
 
  done:
     OPENSSL_free(buf);
+    BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     EVP_MD_CTX_free(hash);
     return rc;

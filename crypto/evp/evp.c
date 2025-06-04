@@ -228,6 +228,25 @@ void evp_pkey_set_method(EVP_PKEY *pkey, const EVP_PKEY_ASN1_METHOD *method) {
   pkey->type = pkey->ameth->pkey_id;
 }
 
+int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type)
+{
+    if (pkey->type == type) {
+        return 1; /* it already is that type */
+    }
+
+    /*
+     * The application is requesting to alias this to a different pkey type,
+     * but not one that resolves to the base type.
+     */
+    if (EVP_PKEY_type(type) != EVP_PKEY_base_id(pkey)) {
+        EVPerr(EVP_F_EVP_PKEY_SET_ALIAS_TYPE, EVP_R_UNSUPPORTED_ALGORITHM);
+        return 0;
+    }
+
+    pkey->type = type;
+    return 1;
+}
+
 int EVP_PKEY_type(int nid) {
   // In OpenSSL, this was used to map between type aliases. BoringSSL supports
   // no type aliases, so this function is just the identity.

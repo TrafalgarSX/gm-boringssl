@@ -338,7 +338,7 @@ const EVP_PKEY_ASN1_METHOD sm2_asn1_meth = {
     EVP_PKEY_SM2,
     // 1.2.156.10197.1.301
     {0x2a, 0x81, 0x1c, 0xcf, 0x55, 0x01, 0x82, 0x2d},
-    9,
+    8,
     &sm2_pkey_meth,
 
     eckey_pub_decode,

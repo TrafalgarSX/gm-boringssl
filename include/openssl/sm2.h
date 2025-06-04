@@ -19,6 +19,10 @@
 
 #  include <openssl/ec.h>
 
+#  ifdef  __cplusplus
+extern "C" {
+#  endif // __cplusplus
+
 int ossl_sm2_key_private_check(const EC_KEY *eckey);
 
 /* The default user id as specified in GM/T 0009-2012 */
@@ -81,5 +85,14 @@ int ossl_sm2_decrypt(const EC_KEY *key,
 
 const unsigned char *ossl_sm2_algorithmidentifier_encoding(int md_nid,
                                                            size_t *len);
+
+int ossl_sm2_ciphertext_der(const uint8_t *in, size_t in_len,
+                            uint8_t **out, size_t *out_len);
+
+
+#  ifdef  __cplusplus
+}
+#  endif // __cplusplus
+
 # endif /* OPENSSL_NO_SM2 */
 #endif

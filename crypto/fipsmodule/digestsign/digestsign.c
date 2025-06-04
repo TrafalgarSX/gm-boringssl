@@ -112,6 +112,14 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     if (!EVP_DigestInit_ex(ctx, type, e)) {
       return 0;
     }
+
+    /*
+     * This indicates the current algorithm requires
+     * special treatment before hashing the tbs-message.
+     */
+    if (ctx->pctx->pmeth->digest_custom != NULL) {
+      return ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx);
+    }
   }
 
   if (pctx) {

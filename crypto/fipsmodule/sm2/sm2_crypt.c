@@ -529,3 +529,72 @@ int ossl_sm2_decrypt(const EC_KEY *key,
 
     return rc;
 }
+
+static uint8_t *hex_to_bin(const char *hex, size_t *out_len)
+{
+    size_t len = *out_len;
+    if (len % 2 != 0) {
+        // OPENSSL_PUT_ERROR(SM2, SM2_R_INVALID_HEX_STRING);
+        return NULL;
+    }
+
+    *out_len = len / 2;
+    uint8_t *bin = OPENSSL_malloc(*out_len);
+    if (bin == NULL) {
+        // OPENSSL_PUT_ERROR(SM2, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    for (size_t i = 0; i < *out_len; i++) {
+        sscanf(hex + 2 * i, "%2hhx", &bin[i]);
+    }
+    return bin;
+}
+
+int ossl_sm2_ciphertext_der(const uint8_t *in, size_t in_len,
+                            uint8_t **out, size_t *out_len)
+{
+    SM2_Ciphertext ctext;
+    int ret = 0;
+
+    if (in == NULL || in_len <= 0 || out == NULL || out_len == NULL) {
+        // OPENSSL_PUT_ERROR(SM2, SM2_R_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    /*
+        in 
+        D93D82D52DF2EA3522184E927F0CC61205F511F572F6E51024CA130886C28F97
+        739ABCA771B4B4370477A4CEF5D6674D944F4218FD23229646EEA9CD7E424EA1
+        0C5BB9CB86835E358D538EBD6C0D5382238E46D0B07E46F02E2A9B0677E8D233
+        05293DE5373DEC027D238A070B24
+    */
+    // in hex decode to binary
+    // hex to binary conversion
+    uint8_t *in_bin = hex_to_bin((const char *)in, &in_len);
+    size_t in_bin_len = in_len;
+
+    ctext.C1x = BN_bin2bn((const uint8_t *)in_bin, 32, NULL);
+    ctext.C1y = BN_bin2bn((const uint8_t *)(in_bin + 32), 32, NULL);
+    memcpy(ctext.C3, in_bin + 64, 32); // C3 is the next 32 bytes
+    ctext.C2_len = in_bin_len - 96; // Remaining bytes are C2
+    ctext.C2 = OPENSSL_memdup(in_bin + 96, ctext.C2_len);
+
+    ret = i2d_SM2_Ciphertext(&ctext, out);
+
+    // Free the allocated memory for C2
+    BN_free(ctext.C1x);
+    BN_free(ctext.C1y);
+    OPENSSL_free(ctext.C2);
+    ctext.C2 = NULL; // Avoid dangling pointer
+    ctext.C1x = NULL; // Avoid dangling pointer
+    ctext.C1y = NULL; // Avoid dangling pointer
+
+    if (ret < 0) {
+        OPENSSL_PUT_ERROR(SM2, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    *out_len = (size_t)ret;
+    return 1;
+}

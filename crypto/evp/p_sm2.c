@@ -16,6 +16,7 @@
 #include <openssl/obj.h>
 #include <openssl/sm2.h>
 #include <openssl/sm2err.h>
+#include <string.h>
 
 #include "internal.h"
 // #include "internal/sm2.h"
@@ -28,10 +29,11 @@ typedef struct {
     const EVP_MD *md;
     /* Key and paramgen group */
     EC_GROUP *gen_group;
-    /* z */
-    uint8_t z[EVP_MAX_MD_SIZE];
-    uint8_t *user_id; /* User ID for SM2 */
-    size_t user_id_len; /* Length of User ID */
+    /* Distinguishing Identifier, ISO/IEC 15946-3 */
+    uint8_t *id;
+    size_t id_len;
+    /* id_set indicates if the 'id' field is set (1) or not (0) */
+    int id_set;
 } SM2_PKEY_CTX;
 
 static int pkey_sm2_init(EVP_PKEY_CTX *ctx)
@@ -53,8 +55,8 @@ static void pkey_sm2_cleanup(EVP_PKEY_CTX *ctx)
 
     if (dctx != NULL) {
         EC_GROUP_free(dctx->gen_group);
+        OPENSSL_free(dctx->id);
         OPENSSL_free(dctx);
-        OPENSSL_free(dctx->user_id);
         ctx->data = NULL;
     }
 }
@@ -74,6 +76,18 @@ static int pkey_sm2_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
             return 0;
         }
     }
+    if (sctx->id != NULL) {
+        dctx->id = OPENSSL_malloc(sctx->id_len);
+        if (dctx->id == NULL) {
+            OPENSSL_PUT_ERROR(SM2, ERR_R_MALLOC_FAILURE);
+            pkey_sm2_cleanup(dst);
+            return 0;
+        }
+        memcpy(dctx->id, sctx->id, sctx->id_len);
+    }
+    dctx->id_len = sctx->id_len;
+    dctx->id_set = sctx->id_set;
+
     dctx->md = sctx->md;
 
     return 1;
@@ -158,6 +172,7 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
     SM2_PKEY_CTX *dctx = ctx->data;
     EC_GROUP *group;
+    uint8_t *tmp_id;
 
     switch (type) {
     case EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID:
@@ -185,8 +200,30 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_GET_MD:
         *(const EVP_MD **)p2 = dctx->md;
         return 1;
-    case EVP_PKEY_CTRL_SET_SM2_USERID:
-
+    case EVP_PKEY_CTRL_SET1_ID:
+        if (p1 > 0) {
+            tmp_id = OPENSSL_malloc(p1);
+            if (tmp_id == NULL) {
+                OPENSSL_PUT_ERROR(SM2, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
+            memcpy(tmp_id, p2, p1);
+            OPENSSL_free(dctx->id);
+            dctx->id = tmp_id;
+        } else {
+            /* set null-ID */
+            OPENSSL_free(dctx->id);
+            dctx->id = NULL;
+        }
+        dctx->id_len = (size_t)p1;
+        dctx->id_set = 1;
+        return 1;
+    case EVP_PKEY_CTRL_GET1_ID:
+        memcpy(p2, dctx->id, dctx->id_len);
+        return 1;
+    case EVP_PKEY_CTRL_GET1_ID_LEN:
+        *(size_t *)p2 = dctx->id_len;
+        return 1;
 
     default:
         return -2;
@@ -212,14 +249,6 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
     return 0;
   }
   EVP_PKEY_assign_SM2_KEY(pkey, ec);
-
-  if (dctx->md == NULL) {
-      dctx->md = EVP_sm3();
-  }
-  if (!ossl_sm2_compute_z_digest(dctx->z, dctx->md, dctx->user_id, dctx->user_id_len, ec)) {
-      OPENSSL_PUT_ERROR(SM2, SM2_R_COMPUTE_Z_FAILED);
-      return 0;
-  }
   return 1;
 }
 
@@ -239,6 +268,36 @@ static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
   return 1;
 }
 
+static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
+{
+    uint8_t z[EVP_MAX_MD_SIZE];
+    SM2_PKEY_CTX *smctx = ctx->data;
+    EC_KEY *ec = ctx->pkey->pkey;
+    const EVP_MD *md = EVP_MD_CTX_md(mctx);
+    int mdlen = EVP_MD_size(md);
+
+    if (!smctx->id_set) {
+        /*
+         * An ID value must be set. The specifications are not clear whether a
+         * NULL is allowed. We only allow it if set explicitly for maximum
+         * flexibility.
+         */
+        OPENSSL_PUT_ERROR(EVP, SM2_R_ID_NOT_SET);
+        return 0;
+    }
+
+    if (mdlen < 0) {
+        OPENSSL_PUT_ERROR(EVP, SM2_R_INVALID_DIGEST);
+        return 0;
+    }
+
+    /* get hashed prefix 'z' of tbs message */
+    if (!ossl_sm2_compute_z_digest(z, md, smctx->id, smctx->id_len, ec))
+        return 0;
+
+    return EVP_DigestUpdate(mctx, z, (size_t)mdlen);
+}
+
 const EVP_PKEY_METHOD sm2_pkey_meth = {
     EVP_PKEY_SM2,
     pkey_sm2_init,
@@ -255,6 +314,7 @@ const EVP_PKEY_METHOD sm2_pkey_meth = {
     NULL, // derive not supported
     pkey_ec_paramgen, // paramgen not supported
     pkey_sm2_ctrl,
+    pkey_sm2_digest_custom,
 };
 
 int EVP_PKEY_CTX_set_sm2_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid) {

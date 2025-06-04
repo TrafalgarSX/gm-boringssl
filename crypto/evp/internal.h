@@ -214,6 +214,9 @@ OPENSSL_EXPORT int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 #define EVP_PKEY_CTRL_HKDF_SALT (EVP_PKEY_ALG_CTRL + 17)
 #define EVP_PKEY_CTRL_HKDF_INFO (EVP_PKEY_ALG_CTRL + 18)
 #define EVP_PKEY_CTRL_DH_PAD (EVP_PKEY_ALG_CTRL + 19)
+#define EVP_PKEY_CTRL_SET1_ID (EVP_PKEY_ALG_CTRL + 20)
+#define EVP_PKEY_CTRL_GET1_ID (EVP_PKEY_ALG_CTRL + 21)
+#define EVP_PKEY_CTRL_GET1_ID_LEN (EVP_PKEY_ALG_CTRL + 22)
 
 struct evp_pkey_ctx_st {
   // Method associated with this operation
@@ -265,6 +268,7 @@ struct evp_pkey_method_st {
   int (*paramgen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
 
   int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
+  int (*digest_custom) (EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
 } /* EVP_PKEY_METHOD */;
 
 typedef struct {

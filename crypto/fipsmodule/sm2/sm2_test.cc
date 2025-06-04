@@ -67,6 +67,8 @@ TEST(SM2Test, test_sm2) {
 
     uint8_t plaintext[8];
     size_t ptext_len = sizeof(plaintext);
+    std::string id = "message digest";
+    bssl::UniquePtr<EVP_PKEY_CTX> sctx;
 
     pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_SM2, NULL);
     ASSERT_TRUE(pctx != NULL);
@@ -99,6 +101,14 @@ TEST(SM2Test, test_sm2) {
     md_ctx_verify = EVP_MD_CTX_new();
     if (!md_ctx_verify)
         goto done;
+
+    sctx.reset(EVP_PKEY_CTX_new(pkey, nullptr));
+    ASSERT_TRUE(pctx);
+
+    EVP_PKEY_CTX_set1_id(sctx.get(), (const uint8_t *)id.c_str(), id.length());
+
+    EVP_MD_CTX_set_pkey_ctx(md_ctx, sctx.get());
+    EVP_MD_CTX_set_pkey_ctx(md_ctx_verify, sctx.get());
 
     if (!EVP_DigestSignInit(md_ctx, NULL, EVP_sm3(), NULL, pkey))
         goto done;
@@ -168,63 +178,95 @@ done:
     ASSERT_TRUE(ret == 1);
 }
 
-TEST(SM2Test, sm2_sign_verify_test) {
-    std::vector<std::pair<std::string, std::string>> test_cases = {
-        {"D7AD397F6FFA5D4F7F11E7217F241607DC30618C236D2C09C1B9EA8FDADEE2E8", "3046022100AB1DB64DE7C40EDBDE6651C9B8EBDB804673DB836E5D5C7FE15DCF9ED2725037022100EBA714451FF69B0BB930B379E192E7CD5FA6E3C41C7FBD8303B799AB54A54621"},
-        {"B1139602C6ECC9E15E2F3F9C635A1AFE737058BC15387479C1EA0D0B3D90E9E5", "3045022100E6E0414EBD3A656C35602AF14AB20287DBF30D57AF75C49A188ED4B42391F22402202F54F277C606F4605E1CE9514947FFDDF94C67A539804A4ED17F852288BDBE2E"},
-        // {"40AA1B203C9D8EE150B21C3C7CDA8261492E5420C5F2B9F7380700E094C303B48E62F319C1DA0E32EB40D113C5F1749CC61AEB499167890AB82F2CC9BB706971", "3046022100AE018933B9BA041784380069F2DDF609694DCD299FDBF23D09F4B711FBC103EC0221008440BB1A48C132DE4FB91BE9F43B958142FDD29FB9DABE01B17514023A2F638C"}
+TEST(SM2Test, sm2_verify_test) {
+    /* From https://tools.ietf.org/html/draft-shen-sm2-ecdsa-02#appendix-A */
+    std::string pubkey = R"(
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoEcz1UBgi0DQgAE1VSMeCXLtWFQo1Bs1XRkr4oa4FGd
++vPFgiHcgQyvKN2SEHN2j+PVnOVOeaSURc9z/tIwhlNwJyZNFolG1HlTPg==
+-----END PUBLIC KEY-----
+    )";
+
+    const char *msg = "message digest";
+    std::string id = "1234567812345678";
+
+    const uint8_t signature[] = {
+       0x30, 0x44, 0x02, 0x20,
+
+        0x29, 0xC7, 0x23, 0x93, 0x29, 0x86, 0x04, 0xAA,
+        0x6B, 0xA8, 0x14, 0xEB, 0xA1, 0xD5, 0xD4, 0xF5,
+        0xF6, 0x76, 0x53, 0xE6, 0x94, 0x8E, 0x7A, 0xFF,
+        0x36, 0x00, 0x11, 0xFB, 0x50, 0xE3, 0x20, 0x24,
+       0x02, 0x20,
+    0xC9, 0x05, 0xA3, 0x76, 0xFF, 0x74, 0x2B, 0x86,
+    0x6E, 0x49, 0x13, 0xA7, 0x7D, 0xDC, 0xFE, 0x70,
+    0xE1, 0x7D, 0xEF, 0x0B, 0x18, 0xD0, 0x26, 0xA9,
+    0xEA, 0x07, 0x48, 0xE2, 0x58, 0x24, 0x27, 0xB7
     };
 
-    std::string private_key_pem = R"(
------BEGIN PRIVATE KEY-----
-MIGHAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBG0wawIBAQQg0JFWczAXva2An9m7
-2MaT9gIwWTFptvlKrxyO4TjMmbWhRANCAAQ5OirZ4n5DrKqrhaGdO4VZHhRAYVcX
-Wt3Te/d/8Mr57Tf886i09VwDhSMmH8pmNq/mp6+ioUgqYG9cs6GLLioe
------END PRIVATE KEY-----
-)";
-
-    bssl::UniquePtr<BIO> key_bio(BIO_new_mem_buf(private_key_pem.c_str(), private_key_pem.size()));
+    bssl::UniquePtr<BIO> key_bio(BIO_new_mem_buf(pubkey.c_str(), pubkey.size()));
     ASSERT_TRUE(key_bio);
 
-    bssl::UniquePtr<EVP_PKEY> key(
-        PEM_read_bio_PrivateKey(key_bio.get(), nullptr, nullptr, nullptr));
-    ASSERT_TRUE(key);
+    bssl::UniquePtr<EVP_PKEY> pkey(
+        PEM_read_bio_PUBKEY(key_bio.get(), nullptr, nullptr, nullptr));
+    ASSERT_TRUE(pkey);
 
-    bssl::UniquePtr<EVP_PKEY_CTX> ctx(EVP_PKEY_CTX_new(key.get(), nullptr));
-    ASSERT_TRUE(ctx);
+    bssl::UniquePtr<EVP_PKEY_CTX> pctx(EVP_PKEY_CTX_new(pkey.get(), nullptr));
+    ASSERT_TRUE(pctx);
 
-    ASSERT_TRUE(EVP_PKEY_CTX_set_signature_md(ctx.get(), EVP_sm3()));
-    ASSERT_TRUE(EVP_PKEY_verify_init(ctx.get()));
-    for (const auto &test_case : test_cases) {
-        const std::string &input_hex = test_case.first;
-        const std::string &expected_output_hex = test_case.second;
+    ASSERT_TRUE(EVP_PKEY_CTX_set_signature_md(pctx.get(), EVP_sm3()));
 
-        std::vector<uint8_t> input(input_hex.size() / 2);
-        for (size_t i = 0; i < input.size(); ++i) {
-            sscanf(input_hex.c_str() + 2 * i, "%2hhx", &input[i]);
-        }
+    bssl::UniquePtr<EVP_MD_CTX> mctx(EVP_MD_CTX_new());
+    ASSERT_TRUE(mctx);
+    
+    ASSERT_TRUE(EVP_PKEY_CTX_set1_id(pctx.get(), (const uint8_t *)id.c_str(), id.length()));
 
-        size_t sig_len = 0;
-        ASSERT_TRUE(EVP_PKEY_sign(ctx.get(), nullptr, &sig_len, input.data(), input.size()));
-        std::vector<uint8_t> signature(sig_len);
-        ASSERT_TRUE(EVP_PKEY_sign(ctx.get(), signature.data(), &sig_len, input.data(), input.size()));
-        signature.resize(sig_len);
+    EVP_MD_CTX_set_pkey_ctx(mctx.get(), pctx.get());
 
-        std::string output_hex;
-        for (uint8_t byte : signature) {
-            char buf[3];
-            snprintf(buf, sizeof(buf), "%02x", byte);
-            output_hex += buf;
-        }
+    ASSERT_TRUE(EVP_DigestVerifyInit(mctx.get(), NULL, EVP_sm3(), NULL, pkey.get()));
 
-        ASSERT_EQ(output_hex, expected_output_hex);
-    }
+    ASSERT_TRUE(EVP_DigestVerifyUpdate(mctx.get(), msg, strlen(msg)));
 
-
-done:
-   
+    ASSERT_TRUE(EVP_DigestVerifyFinal(mctx.get(), signature, sizeof(signature)));
 }
 
-TEST(SM2Test, sm2_enc_dec_test) {
+TEST(SM2Test, sm2_dec_test) {
+    std::string private_key = R"(
+-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBG0wawIBAQQgeQTrKtO8mNXn/yvg
+R+pdbCgH5sl+WCFfXcqGl64soU2hRANCAAQFv/ruxAbI8/WApuOcUoR2wN8rYQZd
+SnT0dq8PtmiQ+JasxLIdiwNtE/F71NOCNJCL7bd/jj6uhwZU/G+oBI0M
+-----END PRIVATE KEY-----
+    )";
+    std::string msg = "message digest";
 
+    std::string ciphertext = "D93D82D52DF2EA3522184E927F0CC61205F511F572F6E51024CA130886C28F97739ABCA771B4B4370477A4CEF5D6674D944F4218FD23229646EEA9CD7E424EA10C5BB9CB86835E358D538EBD6C0D5382238E46D0B07E46F02E2A9B0677E8D23305293DE5373DEC027D238A070B24";
+
+    uint8_t *ciphertext_bin = nullptr;
+    size_t ctext_len = 0;
+    int ret = ossl_sm2_ciphertext_der((const uint8_t *)ciphertext.c_str(),
+                            ciphertext.size(), &ciphertext_bin, &ctext_len);
+    ASSERT_TRUE(ret == 1);
+
+    bssl::UniquePtr<BIO> key_bio(BIO_new_mem_buf(private_key.c_str(), private_key.size()));
+    ASSERT_TRUE(key_bio);
+
+    bssl::UniquePtr<EVP_PKEY> pkey(
+        PEM_read_bio_PrivateKey(key_bio.get(), nullptr, nullptr, nullptr));
+    ASSERT_TRUE(pkey);
+
+    bssl::UniquePtr<EVP_PKEY_CTX> pctx(EVP_PKEY_CTX_new(pkey.get(), nullptr));
+    ASSERT_TRUE(pctx);
+
+    // decrypt
+    bssl::UniquePtr<EVP_PKEY_CTX> dctx(EVP_PKEY_CTX_new(pkey.get(), nullptr));
+    ASSERT_TRUE(dctx);
+    ASSERT_TRUE(EVP_PKEY_decrypt_init(dctx.get()));
+
+    uint8_t plaintext[128]{};
+    size_t ptext_len = sizeof(plaintext);
+    ASSERT_TRUE(EVP_PKEY_decrypt(dctx.get(), plaintext, &ptext_len, ciphertext_bin, ctext_len));
+
+    ASSERT_TRUE(ptext_len == msg.size());
+    ASSERT_TRUE(memcmp(plaintext, msg.c_str(), ptext_len) == 0);
 }

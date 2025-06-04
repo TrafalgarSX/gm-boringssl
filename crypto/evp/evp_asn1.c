@@ -125,6 +125,8 @@ EVP_PKEY *EVP_parse_public_key(CBS *cbs) {
   if (ret == NULL) {
     goto err;
   }
+
+  // TODO guoyawen
   evp_pkey_set_method(ret, method);
 
   // Call into the type-specific SPKI decoding function.
@@ -220,7 +222,6 @@ static EVP_PKEY *old_priv_decode(CBS *cbs, int type) {
       return ret;
     }
     case EVP_PKEY_SM2: {
-      // TODO guoyawen
       EC_KEY *ec_key = EC_KEY_parse_private_key(cbs, NULL);
       if (ec_key == NULL || !EVP_PKEY_assign_SM2_KEY(ret, ec_key)) {
         EC_KEY_free(ec_key);

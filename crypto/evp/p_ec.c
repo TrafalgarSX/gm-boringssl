@@ -67,9 +67,10 @@
 #include <openssl/mem.h>
 #include <openssl/nid.h>
 
-#include "internal.h"
 #include "../fipsmodule/ec/internal.h"
 #include "../internal.h"
+#include "internal.h"
+
 
 
 typedef struct {
@@ -135,8 +136,7 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx, const uint8_t *sig, size_t siglen,
   return ECDSA_verify(0, tbs, tbslen, sig, siglen, ec_key);
 }
 
-static int pkey_ec_derive(EVP_PKEY_CTX *ctx, uint8_t *key,
-                          size_t *keylen) {
+static int pkey_ec_derive(EVP_PKEY_CTX *ctx, uint8_t *key, size_t *keylen) {
   if (!ctx->pkey || !ctx->peerkey) {
     OPENSSL_PUT_ERROR(EVP, EVP_R_KEYS_NOT_SET);
     return 0;
@@ -215,9 +215,7 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
     group = EC_KEY_get0_group(ctx->pkey->pkey);
   }
   EC_KEY *ec = EC_KEY_new();
-  if (ec == NULL ||
-      !EC_KEY_set_group(ec, group) ||
-      !EC_KEY_generate_key(ec)) {
+  if (ec == NULL || !EC_KEY_set_group(ec, group) || !EC_KEY_generate_key(ec)) {
     EC_KEY_free(ec);
     return 0;
   }
@@ -232,8 +230,7 @@ static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
     return 0;
   }
   EC_KEY *ec = EC_KEY_new();
-  if (ec == NULL ||
-      !EC_KEY_set_group(ec, dctx->gen_group)) {
+  if (ec == NULL || !EC_KEY_set_group(ec, dctx->gen_group)) {
     EC_KEY_free(ec);
     return 0;
   }
@@ -257,6 +254,7 @@ const EVP_PKEY_METHOD ec_pkey_meth = {
     pkey_ec_derive,
     pkey_ec_paramgen,
     pkey_ec_ctrl,
+    NULL,
 };
 
 int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid) {
@@ -272,4 +270,19 @@ int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int encoding) {
     return 0;
   }
   return 1;
+}
+
+/* SM2 will skip the operation check so no need to pass operation here */
+int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, const uint8_t *id, size_t id_len) {
+  return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_SET1_ID, (int)id_len,
+                           (void *)(id));
+}
+
+int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, uint8_t *id) {
+  return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_GET1_ID, 0, (void *)(id));
+}
+
+int EVP_PKEY_CTX_get1_id_len(EVP_PKEY_CTX *ctx, size_t *id_len) {
+  return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_GET1_ID_LEN, 0,
+                           (void *)(id_len));
 }

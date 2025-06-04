@@ -97,4 +97,5 @@ const EVP_PKEY_METHOD ed25519_pkey_meth = {
     NULL /* derive */,
     NULL /* paramgen */,
     NULL /* ctrl */,
+    NULL,
 };

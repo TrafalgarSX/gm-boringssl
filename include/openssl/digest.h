@@ -130,6 +130,8 @@ OPENSSL_EXPORT void EVP_MD_CTX_cleanse(EVP_MD_CTX *ctx);
 // EVP_MD_CTX_free calls |EVP_MD_CTX_cleanup| and then frees |ctx| itself.
 OPENSSL_EXPORT void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
 
+OPENSSL_EXPORT void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
+
 // EVP_MD_CTX_copy_ex sets |out|, which must already be initialised, to be a
 // copy of |in|. It returns one on success and zero on allocation failure.
 OPENSSL_EXPORT int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
@@ -300,7 +302,8 @@ OPENSSL_EXPORT uint32_t EVP_MD_meth_get_flags(const EVP_MD *md);
 
 // EVP_MD_CTX_set_flags does nothing.
 OPENSSL_EXPORT void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
-
+OPENSSL_EXPORT void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
+OPENSSL_EXPORT int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
 // EVP_MD_CTX_FLAG_NON_FIPS_ALLOW is meaningless. In OpenSSL it permits non-FIPS
 // algorithms in FIPS mode. But BoringSSL FIPS mode doesn't prohibit algorithms
 // (it's up the the caller to use the FIPS module in a fashion compliant with
@@ -317,6 +320,7 @@ struct env_md_ctx_st {
   // digest is the underlying digest function, or NULL if not set.
   const EVP_MD *digest;
   // md_data points to a block of memory that contains the hash-specific
+  uint64_t flags;
   // context.
   void *md_data;
 

@@ -117,7 +117,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e) {
     OPENSSL_PUT_ERROR(EVP, ERR_R_PASSED_NULL_PARAMETER);
     return NULL;
   }
-
+  // TODO guoyawen
   const EVP_PKEY_METHOD *pkey_method = pkey->ameth->pkey_method;
   if (pkey_method == NULL) {
     OPENSSL_PUT_ERROR(EVP, EVP_R_UNSUPPORTED_ALGORITHM);
@@ -197,6 +197,9 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype, int cmd,
     OPENSSL_PUT_ERROR(EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return 0;
   }
+  /* Skip the operation checks since this is called in a very early stage */
+  if (ctx->pmeth->digest_custom != NULL)
+      goto doit;
 
   if (ctx->operation == EVP_PKEY_OP_UNDEFINED) {
     OPENSSL_PUT_ERROR(EVP, EVP_R_NO_OPERATION_SET);
@@ -207,7 +210,7 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype, int cmd,
     OPENSSL_PUT_ERROR(EVP, EVP_R_INVALID_OPERATION);
     return 0;
   }
-
+doit:
   return ctx->pmeth->ctrl(ctx, cmd, p1, p2);
 }
 

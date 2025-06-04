@@ -76,6 +76,11 @@
 extern "C" {
 #endif
 
+/*
+ * Don't free up md_ctx->pctx in EVP_MD_CTX_reset, use the reserved flag
+ * values in evp.h
+ */
+#define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
 
 // EVP abstracts over public/private key algorithms.
 
@@ -817,6 +822,9 @@ OPENSSL_EXPORT int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx,
                                                           int nid);
 
 
+OPENSSL_EXPORT int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, const uint8_t *id, size_t id_len);
+OPENSSL_EXPORT int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, uint8_t *id);
+OPENSSL_EXPORT int EVP_PKEY_CTX_get1_id_len(EVP_PKEY_CTX *ctx, size_t *id_len);
 // Diffie-Hellman-specific control functions.
 
 // EVP_PKEY_CTX_set_dh_pad configures configures whether |ctx|, which must be an
@@ -1047,7 +1055,7 @@ OPENSSL_EXPORT int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
 
 // EVP_PKEY_type returns |nid|.
 OPENSSL_EXPORT int EVP_PKEY_type(int nid);
-
+OPENSSL_EXPORT int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
 
 // Preprocessor compatibility section (hidden).
 //
