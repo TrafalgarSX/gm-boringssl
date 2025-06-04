@@ -72,13 +72,9 @@ static int eckey_pub_encode(CBB *out, const EVP_PKEY *key) {
   const uint8_t *oidptr = NULL;
   uint8_t oid_len;
 
-  if(key->type != EVP_PKEY_SM2) {
-    oidptr = ec_asn1_meth.oid;
-    oid_len = ec_asn1_meth.oid_len;
-  } else {
-    oidptr = sm2_asn1_meth.oid;
-    oid_len = sm2_asn1_meth.oid_len;
-  }
+  // either use the standard EC key type or the SM2 key type, algorithm always ec_asn1_meth.oid
+  oidptr = ec_asn1_meth.oid;
+  oid_len = ec_asn1_meth.oid_len;
 
   // See RFC 5480, section 2.
   CBB spki, algorithm, oid, key_bitstring;
@@ -184,13 +180,11 @@ static int eckey_priv_encode(CBB *out, const EVP_PKEY *key) {
   const uint8_t *oidptr = NULL;
   uint8_t oid_len;
 
-  if(key->type != EVP_PKEY_SM2) {
-    oidptr = ec_asn1_meth.oid;
-    oid_len = ec_asn1_meth.oid_len;
-  } else {
-    oidptr = sm2_asn1_meth.oid;
-    oid_len = sm2_asn1_meth.oid_len;
-  }
+  // TODO 这个函数没有测试过，后续可能有 bug
+  // either use the standard EC key type or the SM2 key type, algorithm always ec_asn1_meth.oid
+  oidptr = ec_asn1_meth.oid;
+  oid_len = ec_asn1_meth.oid_len;
+
   // See RFC 5915.
   CBB pkcs8, algorithm, oid, private_key;
   if (!CBB_add_asn1(out, &pkcs8, CBS_ASN1_SEQUENCE) ||

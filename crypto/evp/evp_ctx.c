@@ -117,7 +117,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e) {
     OPENSSL_PUT_ERROR(EVP, ERR_R_PASSED_NULL_PARAMETER);
     return NULL;
   }
-  // TODO guoyawen
+
   const EVP_PKEY_METHOD *pkey_method = pkey->ameth->pkey_method;
   if (pkey_method == NULL) {
     OPENSSL_PUT_ERROR(EVP, EVP_R_UNSUPPORTED_ALGORITHM);

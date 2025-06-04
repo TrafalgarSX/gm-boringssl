@@ -126,7 +126,6 @@ EVP_PKEY *EVP_parse_public_key(CBS *cbs) {
     goto err;
   }
 
-  // TODO guoyawen
   evp_pkey_set_method(ret, method);
 
   // Call into the type-specific SPKI decoding function.
