@@ -174,6 +174,9 @@ OPENSSL_EXPORT int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 #define EVP_PKEY_CTRL_HKDF_SALT (EVP_PKEY_ALG_CTRL + 17)
 #define EVP_PKEY_CTRL_HKDF_INFO (EVP_PKEY_ALG_CTRL + 18)
 #define EVP_PKEY_CTRL_DH_PAD (EVP_PKEY_ALG_CTRL + 19)
+#define EVP_PKEY_CTRL_SET1_ID (EVP_PKEY_ALG_CTRL + 20)
+#define EVP_PKEY_CTRL_GET1_ID (EVP_PKEY_ALG_CTRL + 21)
+#define EVP_PKEY_CTRL_GET1_ID_LEN (EVP_PKEY_ALG_CTRL + 22)
 
 struct evp_pkey_ctx_st {
   ~evp_pkey_ctx_st();
@@ -227,6 +230,7 @@ struct evp_pkey_method_st {
   int (*paramgen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
 
   int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
+  int (*digest_custom) (EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
 } /* EVP_PKEY_METHOD */;
 
 typedef struct {
@@ -252,6 +256,7 @@ extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD x25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD sm2_asn1_meth;
 
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
 extern const EVP_PKEY_METHOD ec_pkey_meth;
@@ -259,6 +264,7 @@ extern const EVP_PKEY_METHOD ed25519_pkey_meth;
 extern const EVP_PKEY_METHOD x25519_pkey_meth;
 extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 extern const EVP_PKEY_METHOD dh_pkey_meth;
+extern const EVP_PKEY_METHOD sm2_pkey_meth;
 
 // evp_pkey_set_method behaves like |EVP_PKEY_set_type|, but takes a pointer to
 // a method table. This avoids depending on every |EVP_PKEY_ASN1_METHOD|.

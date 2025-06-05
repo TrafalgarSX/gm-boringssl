@@ -42,6 +42,7 @@ static const ec_group_func kAllGroups[] = {
     &EC_group_p256,
     &EC_group_p384,
     &EC_group_p521,
+    &EC_group_sm2p256v1,
 };
 
 EC_KEY *EC_KEY_parse_private_key(CBS *cbs, const EC_GROUP *group) {
@@ -143,7 +144,7 @@ EC_KEY *EC_KEY_parse_private_key(CBS *cbs, const EC_GROUP *group) {
     return nullptr;
   }
 
-  // Ensure the resulting key is valid.
+  // Ensure the resulting key is valid.  前面的 EC_KEY_set_private_key 检验了私钥的大小，但是不支持 sm2 的情况
   if (!EC_KEY_check_key(ret.get())) {
     return nullptr;
   }
@@ -552,4 +553,8 @@ size_t EC_get_builtin_curves(EC_builtin_curve *out_curves,
     out_curves[i].comment = group->comment;
   }
   return OPENSSL_ARRAY_SIZE(kAllGroups);
+}
+
+int EC_KEY_get_group_curvname(const EC_GROUP *group) {
+  return group->curve_name;
 }

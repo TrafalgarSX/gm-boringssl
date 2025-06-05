@@ -15,6 +15,7 @@
 #include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/mem.h>
+#include <openssl/nid.h>
 
 #include "../../internal.h"
 #include "../bn/internal.h"
@@ -57,8 +58,19 @@ int ec_random_scalar(const EC_GROUP *group, EC_SCALAR *out,
 
 int ec_random_nonzero_scalar(const EC_GROUP *group, EC_SCALAR *out,
                              const uint8_t additional_data[32]) {
-  return bn_rand_range_words(out->words, 1, group->order.N.d,
-                             group->order.N.width, additional_data);
+  if(group->curve_name == NID_sm2) {
+    /* range of SM2 private key is [1, n-1) */
+    BIGNUM *order = BN_new();
+    if (order == NULL || !BN_sub(order, &group->order.N, BN_value_one())) {
+        return 0;
+    }
+
+    return bn_rand_range_words(out->words, 1, order->d, order->width,
+                                  additional_data);
+  }else {
+    return bn_rand_range_words(out->words, 1, group->order.N.d,
+                                group->order.N.width, additional_data);
+  }
 }
 
 void ec_scalar_to_bytes(const EC_GROUP *group, uint8_t *out, size_t *out_len,

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <openssl/digest.h>
+#include <openssl/evp.h>
 
 #include <assert.h>
 #include <string.h>
@@ -56,7 +57,7 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx) {
   OPENSSL_free(ctx->md_data);
 
   assert(ctx->pctx == NULL || ctx->pctx_ops != NULL);
-  if (ctx->pctx_ops) {
+  if (ctx->pctx_ops && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX)) {
     ctx->pctx_ops->free(ctx->pctx);
   }
 
@@ -79,6 +80,26 @@ void EVP_MD_CTX_free(EVP_MD_CTX *ctx) {
   OPENSSL_free(ctx);
 }
 
+void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
+{
+    /*
+     * it's reasonable to set NULL pctx (a.k.a clear the ctx->pctx), so
+     * we have to deal with the cleanup job here.
+     */
+    if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX))
+        EVP_PKEY_CTX_free(ctx->pctx);
+
+    ctx->pctx = pctx;
+
+    if (pctx != NULL) {
+        /* make sure pctx is not freed when destroying EVP_MD_CTX */
+        EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+    } else {
+        EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+    }
+    ctx->pctx = pctx;
+}
+
 void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx) { EVP_MD_CTX_free(ctx); }
 
 int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, uint8_t *out, size_t len) {
@@ -88,7 +109,16 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, uint8_t *out, size_t len) {
 
 uint32_t EVP_MD_meth_get_flags(const EVP_MD *md) { return EVP_MD_flags(md); }
 
-void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags) {}
+int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags) {
+    return (ctx->flags & flags);
+}
+void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags) {
+    ctx->flags |= flags;
+}
+
+void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags) {
+    ctx->flags &= ~flags;
+}
 
 int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in) {
   // |in->digest| may be NULL if this is a signing |EVP_MD_CTX| for, e.g.,
@@ -130,6 +160,9 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in) {
 
   EVP_MD_CTX_cleanup(out);
 
+  out->flags = in->flags;
+  /* copied EVP_MD_CTX should free the copied EVP_PKEY_CTX */
+  EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
   out->digest = in->digest;
   out->md_data = tmp_buf;
   if (in->digest != NULL) {

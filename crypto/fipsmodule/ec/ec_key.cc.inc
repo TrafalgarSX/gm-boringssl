@@ -23,6 +23,8 @@
 #include <openssl/err.h>
 #include <openssl/ex_data.h>
 #include <openssl/mem.h>
+#include <openssl/obj.h>
+#include <openssl/sm2.h>
 
 #include "../../internal.h"
 #include "../bcm_interface.h"
@@ -252,6 +254,11 @@ int EC_KEY_check_key(const EC_KEY *eckey) {
   if (!EC_POINT_is_on_curve(eckey->group, eckey->pub_key, NULL)) {
     OPENSSL_PUT_ERROR(EC, EC_R_POINT_IS_NOT_ON_CURVE);
     return 0;
+  }
+
+  // check sm2 private key in [1, n-1)
+  if(eckey->group->curve_name == NID_sm2) {
+    ossl_sm2_key_private_check(eckey);
   }
 
   // Check the public and private keys match.

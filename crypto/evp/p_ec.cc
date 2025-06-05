@@ -30,7 +30,6 @@
 #include "../internal.h"
 #include "internal.h"
 
-
 typedef struct {
   // message digest
   const EVP_MD *md;
@@ -213,10 +212,12 @@ const EVP_PKEY_METHOD ec_pkey_meth = {
     pkey_ec_derive,
     pkey_ec_paramgen,
     pkey_ec_ctrl,
+    NULL,
 };
 
 int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid) {
-  return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, EVP_PKEY_OP_TYPE_GEN,
+  int keytype = nid == EVP_PKEY_SM2 ? EVP_PKEY_SM2 : EVP_PKEY_EC;
+  return EVP_PKEY_CTX_ctrl(ctx, keytype, EVP_PKEY_OP_TYPE_GEN,
                            EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID, nid, NULL);
 }
 
@@ -227,4 +228,19 @@ int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int encoding) {
     return 0;
   }
   return 1;
+}
+
+/* SM2 will skip the operation check so no need to pass operation here */
+int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, const uint8_t *id, size_t id_len) {
+  return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_SET1_ID, (int)id_len,
+                           (void *)(id));
+}
+
+int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, uint8_t *id) {
+  return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_GET1_ID, 0, (void *)(id));
+}
+
+int EVP_PKEY_CTX_get1_id_len(EVP_PKEY_CTX *ctx, size_t *id_len) {
+  return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_GET1_ID_LEN, 0,
+                           (void *)(id_len));
 }

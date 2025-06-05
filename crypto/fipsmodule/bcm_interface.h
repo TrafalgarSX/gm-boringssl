@@ -244,6 +244,15 @@ bcm_infallible BCM_sha512_256_update(SHA512_CTX *sha, const void *data,
 bcm_infallible BCM_sha512_256_final(uint8_t out[BCM_SHA512_256_DIGEST_LENGTH],
                                     SHA512_CTX *sha);
 
+#define BCM_SM3_DIGEST_LENGTH 32
+
+bcm_infallible BCM_sm3_Init(SM3_CTX *c);
+
+bcm_infallible BCM_sm3_Update(SM3_CTX *c, const void *data, size_t len);
+
+bcm_infallible BCM_sm3_Final(uint8_t *out, SM3_CTX *c);
+
+bcm_infallible BCM_sm3_Transform(SM3_CTX *c, const uint8_t *data);
 
 // ML-DSA
 //

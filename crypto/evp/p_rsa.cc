@@ -517,6 +517,7 @@ const EVP_PKEY_METHOD rsa_pkey_meth = {
     NULL /* derive */,
     NULL /* paramgen */,
     pkey_rsa_ctrl,
+    NULL
 };
 
 int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int padding) {
