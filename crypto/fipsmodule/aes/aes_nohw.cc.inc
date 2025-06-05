@@ -1279,3 +1279,4 @@ void aes_nohw_cbc_encrypt(const uint8_t *in, uint8_t *out, size_t len,
 
   memcpy(ivec, iv, 16);
 }
+

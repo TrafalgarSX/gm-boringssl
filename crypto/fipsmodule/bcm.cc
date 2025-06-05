@@ -113,7 +113,17 @@
 #include "slhdsa/thash.cc.inc"
 #include "slhdsa/wots.cc.inc"
 #include "tls/kdf.cc.inc"
-
+#ifndef OPENSSL_NO_SM3
+#include "sm3/sm3.cc.inc"
+#endif
+#include "sm2/ecdh_kdf.cc.inc"
+#include "sm2/sm2_crypt.cc.inc"
+#include "sm2/sm2_key.cc.inc"
+#include "sm2/sm2_sign.cc.inc"
+#include "sm4/sm4_cbc.cc.inc"
+#include "sm4/sm4_ctr.cc.inc"
+#include "sm4/sm4.cc.inc"
+#include "cipher/e_sm4.cc.inc"
 
 #if defined(BORINGSSL_FIPS)
 

@@ -33,6 +33,11 @@
 extern "C" {
 #endif
 
+/*
+ * Don't free up md_ctx->pctx in EVP_MD_CTX_reset, use the reserved flag
+ * values in evp.h
+ */
+#define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
 
 // EVP abstracts over public/private key algorithms.
 
@@ -121,6 +126,7 @@ OPENSSL_EXPORT DSA *EVP_PKEY_get1_DSA(const EVP_PKEY *pkey);
 
 OPENSSL_EXPORT int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key);
 OPENSSL_EXPORT int EVP_PKEY_assign_EC_KEY(EVP_PKEY *pkey, EC_KEY *key);
+OPENSSL_EXPORT int EVP_PKEY_assign_SM2_KEY(EVP_PKEY *pkey, EC_KEY *key);
 OPENSSL_EXPORT EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey);
 OPENSSL_EXPORT EC_KEY *EVP_PKEY_get1_EC_KEY(const EVP_PKEY *pkey);
 
@@ -138,7 +144,7 @@ OPENSSL_EXPORT DH *EVP_PKEY_get1_DH(const EVP_PKEY *pkey);
 #define EVP_PKEY_X25519 NID_X25519
 #define EVP_PKEY_HKDF NID_hkdf
 #define EVP_PKEY_DH NID_dhKeyAgreement
-
+#define EVP_PKEY_SM2 NID_sm2
 // EVP_PKEY_set_type sets the type of |pkey| to |type|. It returns one if
 // successful or zero if the |type| argument is not one of the |EVP_PKEY_*|
 // values. If |pkey| is NULL, it simply reports whether the type is known.
@@ -773,6 +779,9 @@ OPENSSL_EXPORT int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx,
                                                           int nid);
 
 
+OPENSSL_EXPORT int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, const uint8_t *id, size_t id_len);
+OPENSSL_EXPORT int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, uint8_t *id);
+OPENSSL_EXPORT int EVP_PKEY_CTX_get1_id_len(EVP_PKEY_CTX *ctx, size_t *id_len);
 // Diffie-Hellman-specific control functions.
 
 // EVP_PKEY_CTX_set_dh_pad configures configures whether |ctx|, which must be an
@@ -1003,7 +1012,7 @@ OPENSSL_EXPORT int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
 
 // EVP_PKEY_type returns |nid|.
 OPENSSL_EXPORT int EVP_PKEY_type(int nid);
-
+OPENSSL_EXPORT int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
 
 // Preprocessor compatibility section (hidden).
 //

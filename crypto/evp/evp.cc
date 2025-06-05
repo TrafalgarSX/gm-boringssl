@@ -171,6 +171,8 @@ static const EVP_PKEY_ASN1_METHOD *evp_pkey_asn1_find(int nid) {
       return &ed25519_asn1_meth;
     case EVP_PKEY_X25519:
       return &x25519_asn1_meth;
+    case EVP_PKEY_SM2:
+      return &sm2_asn1_meth;
     default:
       return NULL;
   }
@@ -180,6 +182,25 @@ void evp_pkey_set_method(EVP_PKEY *pkey, const EVP_PKEY_ASN1_METHOD *method) {
   free_it(pkey);
   pkey->ameth = method;
   pkey->type = pkey->ameth->pkey_id;
+}
+
+int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type)
+{
+    if (pkey->type == type) {
+        return 1; /* it already is that type */
+    }
+
+    /*
+     * The application is requesting to alias this to a different pkey type,
+     * but not one that resolves to the base type.
+     */
+    if (EVP_PKEY_type(type) != EVP_PKEY_base_id(pkey)) {
+        EVPerr(EVP_F_EVP_PKEY_SET_ALIAS_TYPE, EVP_R_UNSUPPORTED_ALGORITHM);
+        return 0;
+    }
+
+    pkey->type = type;
+    return 1;
 }
 
 int EVP_PKEY_type(int nid) {
@@ -199,6 +220,8 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key) {
       return EVP_PKEY_assign_DSA(pkey, reinterpret_cast<DSA *>(key));
     case EVP_PKEY_EC:
       return EVP_PKEY_assign_EC_KEY(pkey, reinterpret_cast<EC_KEY *>(key));
+    case EVP_PKEY_SM2:
+      return EVP_PKEY_assign_SM2_KEY(pkey, reinterpret_cast<EC_KEY *>(key));
     case EVP_PKEY_DH:
       return EVP_PKEY_assign_DH(pkey, reinterpret_cast<DH *>(key));
   }

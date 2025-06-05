@@ -100,4 +100,5 @@ const EVP_PKEY_METHOD ed25519_pkey_meth = {
     /*derive=*/nullptr,
     /*paramgen=*/nullptr,
     /*ctrl=*/nullptr,
+    /*digest_custom=*/nullptr,
 };

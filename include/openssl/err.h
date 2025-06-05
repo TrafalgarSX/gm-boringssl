@@ -255,7 +255,8 @@ enum {
   ERR_LIB_TRUST_TOKEN,
   ERR_LIB_CMS,
   ERR_LIB_USER,
-  ERR_NUM_LIBS
+  ERR_NUM_LIBS,
+  ERR_LIB_SM2
 };
 
 // The following reason codes used to denote an error occuring in another
@@ -263,6 +264,7 @@ enum {
 #define ERR_R_SYS_LIB ERR_LIB_SYS
 #define ERR_R_BN_LIB ERR_LIB_BN
 #define ERR_R_RSA_LIB ERR_LIB_RSA
+#define ERR_R_SM2_LIB ERR_LIB_SM2
 #define ERR_R_DH_LIB ERR_LIB_DH
 #define ERR_R_EVP_LIB ERR_LIB_EVP
 #define ERR_R_BUF_LIB ERR_LIB_BUF

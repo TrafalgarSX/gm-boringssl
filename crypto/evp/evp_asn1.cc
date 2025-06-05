@@ -34,6 +34,7 @@ static const EVP_PKEY_ASN1_METHOD *const kASN1Methods[] = {
     &dsa_asn1_meth,
     &ed25519_asn1_meth,
     &x25519_asn1_meth,
+    &sm2_asn1_meth,
 };
 
 static const EVP_PKEY_ASN1_METHOD *parse_key_type(CBS *cbs) {
@@ -83,6 +84,7 @@ EVP_PKEY *EVP_parse_public_key(CBS *cbs) {
     return nullptr;
   }
   evp_pkey_set_method(ret.get(), method);
+
 
   // Call into the type-specific SPKI decoding function.
   if (ret->ameth->pub_decode == nullptr) {
@@ -166,6 +168,14 @@ static bssl::UniquePtr<EVP_PKEY> old_priv_decode(CBS *cbs, int type) {
         return nullptr;
       }
       EVP_PKEY_assign_EC_KEY(ret.get(), ec_key.release());
+      return ret;
+    }
+    case EVP_PKEY_SM2: {
+      bssl::UniquePtr<EC_KEY> ec_key(EC_KEY_parse_private_key(cbs, nullptr));
+      if (ec_key == nullptr) {
+        return nullptr;
+      }
+    EVP_PKEY_assign_SM2_KEY(ret.get(), ec_key.release());
       return ret;
     }
     case EVP_PKEY_DSA: {
@@ -284,8 +294,10 @@ int i2d_PublicKey(const EVP_PKEY *key, uint8_t **outp) {
       return i2d_RSAPublicKey(EVP_PKEY_get0_RSA(key), outp);
     case EVP_PKEY_DSA:
       return i2d_DSAPublicKey(EVP_PKEY_get0_DSA(key), outp);
+    case EVP_PKEY_SM2:
     case EVP_PKEY_EC:
       return i2o_ECPublicKey(EVP_PKEY_get0_EC_KEY(key), outp);
+    //   return i2o_SM2PublicKey(EVP_PKEY_get0_SM2(key), outp);
     default:
       OPENSSL_PUT_ERROR(EVP, EVP_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
       return -1;

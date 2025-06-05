@@ -171,6 +171,34 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p521) {
   out->field_greater_than_order = 1;
 }
 
+
+DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_sm2p256v1) {
+  out->curve_name = NID_sm2;
+  out->comment = "SM2 curve over a 256 bit prime field";
+  // 1.2.156.10197.1.301
+  // TODO
+  static const uint8_t kOIDSM2_P256[] = {0x2a, 0x81, 0x1c, 0xcf, 0x55, 0x01, 0x82, 0x2d};
+  OPENSSL_memcpy(out->oid, kOIDSM2_P256, sizeof(kOIDSM2_P256));
+  out->oid_len = sizeof(kOIDSM2_P256);
+
+  ec_group_init_static_mont(&out->field, OPENSSL_ARRAY_SIZE(kSM2_256Field),
+                            kSM2_256Field, kSM2_256FieldRR, kSM2_256FieldN0);
+  ec_group_init_static_mont(&out->order, OPENSSL_ARRAY_SIZE(kSM2_256Order),
+                            kSM2_256Order, kSM2_256OrderRR, kSM2_256OrderN0);
+
+
+  out->meth = EC_GFp_mont_method();
+  OPENSSL_memcpy(out->generator.raw.X.words, kSM2_256MontGX, sizeof(kSM2_256MontGX));
+  OPENSSL_memcpy(out->generator.raw.Y.words, kSM2_256MontGY, sizeof(kSM2_256MontGY));
+  OPENSSL_memcpy(out->generator.raw.Z.words, kSM2_256FieldR, sizeof(kSM2_256FieldR));
+  OPENSSL_memcpy(out->b.words, kSM2_256MontB, sizeof(kSM2_256MontB));
+  out->generator.group = out;
+
+  ec_group_set_a_minus3(out);
+  out->has_order = 1;
+  out->field_greater_than_order = 1;
+}
+
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
                                  const BIGNUM *b, BN_CTX *ctx) {
   if (BN_num_bytes(p) > EC_MAX_BYTES) {
@@ -276,6 +304,8 @@ EC_GROUP *EC_GROUP_new_by_curve_name(int nid) {
       return (EC_GROUP *)EC_group_p384();
     case NID_secp521r1:
       return (EC_GROUP *)EC_group_p521();
+    case NID_sm2:
+      return (EC_GROUP *)EC_group_sm2p256v1();
     default:
       OPENSSL_PUT_ERROR(EC, EC_R_UNKNOWN_GROUP);
       return NULL;
@@ -382,6 +412,8 @@ const char *EC_curve_nid2nist(int nid) {
       return "P-384";
     case NID_secp521r1:
       return "P-521";
+    case NID_sm2:
+      return "SM2-P256";  // SM2 is a variant of P-256.
   }
   return NULL;
 }
@@ -398,6 +430,9 @@ int EC_curve_nist2nid(const char *name) {
   }
   if (strcmp(name, "P-521") == 0) {
     return NID_secp521r1;
+  }
+  if (strcmp(name, "SM2-P256") == 0) {
+    return NID_sm2;
   }
   return NID_undef;
 }

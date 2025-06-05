@@ -1395,6 +1395,25 @@ inline int CRYPTO_is_ARMv8_SHA512_capable(void) {
 #endif
 }
 
+OPENSSL_INLINE int CRYPTO_is_ARMv8_SM3_capable(void) {
+  // There is no |OPENSSL_STATIC_ARMCAP_SHA512|.
+#if defined(__ARM_FEATURE_SM3)
+  return 1;
+#else
+  return (OPENSSL_get_armcap() & ARMV8_SM3) != 0;
+#endif
+}
+
+OPENSSL_INLINE int CRYPTO_is_ARMv8_SM4_capable(void) {
+#if defined(OPENSSL_STATIC_ARMCAP_SM4) || defined(__ARM_FEATURE_SM4)
+  return 1;
+#elif defined(OPENSSL_STATIC_ARMCAP)
+  return 0;
+#else
+  return (OPENSSL_get_armcap() & ARMV8_SM4) != 0;
+#endif
+}
+
 #endif  // OPENSSL_ARM || OPENSSL_AARCH64
 
 

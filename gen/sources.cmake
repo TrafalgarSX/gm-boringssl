@@ -22,7 +22,7 @@ set(
 
 set(
   BCM_INTERNAL_HEADERS
-
+  crypto/fipsmodule/sm4/sm4.cc.inc
   crypto/fipsmodule/aes/aes.cc.inc
   crypto/fipsmodule/aes/aes_nohw.cc.inc
   crypto/fipsmodule/aes/cbc.cc.inc
@@ -58,6 +58,7 @@ set(
   crypto/fipsmodule/cipher/cipher.cc.inc
   crypto/fipsmodule/cipher/e_aes.cc.inc
   crypto/fipsmodule/cipher/e_aesccm.cc.inc
+  crypto/fipsmodule/cipher/e_sm4.cc.inc
   crypto/fipsmodule/cmac/cmac.cc.inc
   crypto/fipsmodule/dh/check.cc.inc
   crypto/fipsmodule/dh/dh.cc.inc
@@ -77,6 +78,10 @@ set(
   crypto/fipsmodule/ec/simple_mul.cc.inc
   crypto/fipsmodule/ec/util.cc.inc
   crypto/fipsmodule/ec/wnaf.cc.inc
+  crypto/fipsmodule/sm2/sm2_crypt.cc.inc
+  crypto/fipsmodule/sm2/sm2_sign.cc.inc
+  crypto/fipsmodule/sm2/sm2_key.cc.inc
+  crypto/fipsmodule/sm2/ecdh_kdf.cc.inc
   crypto/fipsmodule/ecdh/ecdh.cc.inc
   crypto/fipsmodule/ecdsa/ecdsa.cc.inc
   crypto/fipsmodule/hkdf/hkdf.cc.inc
@@ -105,6 +110,8 @@ set(
   crypto/fipsmodule/slhdsa/thash.cc.inc
   crypto/fipsmodule/slhdsa/wots.cc.inc
   crypto/fipsmodule/tls/kdf.cc.inc
+  crypto/fipsmodule/sm3/sm3.cc.inc
+
 )
 
 set(
@@ -274,6 +281,7 @@ set(
 set(
   CRYPTO_SOURCES
 
+  crypto/evp/p_sm2.cc
   crypto/aes/aes.cc
   crypto/asn1/a_bitstr.cc
   crypto/asn1/a_bool.cc
@@ -437,6 +445,7 @@ set(
   crypto/sha/sha1.cc
   crypto/sha/sha256.cc
   crypto/sha/sha512.cc
+  crypto/sm3/sm3.cc
   crypto/siphash/siphash.cc
   crypto/slhdsa/slhdsa.cc
   crypto/spake2plus/spake2plus.cc
@@ -600,6 +609,8 @@ set(
   include/openssl/safestack.h
   include/openssl/service_indicator.h
   include/openssl/sha.h
+  include/openssl/sm3.h
+  include/openssl/sm4.h
   include/openssl/siphash.h
   include/openssl/slhdsa.h
   include/openssl/span.h
@@ -660,6 +671,8 @@ set(
   crypto/fipsmodule/slhdsa/params.h
   crypto/fipsmodule/slhdsa/thash.h
   crypto/fipsmodule/slhdsa/wots.h
+  crypto/fipsmodule/sm3/internal.h
+  crypto/fipsmodule/sm4/internal.h
   crypto/fipsmodule/tls/internal.h
   crypto/hrss/internal.h
   crypto/internal.h
@@ -774,6 +787,9 @@ set(
   crypto/fipsmodule/service_indicator/service_indicator_test.cc
   crypto/fipsmodule/sha/sha_test.cc
   crypto/hmac/hmac_test.cc
+  crypto/fipsmodule/sm2/sm2_test.cc
+  crypto/fipsmodule/sm3/sm3_test.cc
+  crypto/fipsmodule/sm4/sm4_test.cc
   crypto/hpke/hpke_test.cc
   crypto/hrss/hrss_test.cc
   crypto/impl_dispatch_test.cc

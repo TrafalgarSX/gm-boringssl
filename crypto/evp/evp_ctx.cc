@@ -27,7 +27,7 @@
 
 static const EVP_PKEY_METHOD *const evp_methods[] = {
     &rsa_pkey_meth,    &ec_pkey_meth,   &ed25519_pkey_meth,
-    &x25519_pkey_meth, &hkdf_pkey_meth,
+    &x25519_pkey_meth, &hkdf_pkey_meth, &sm2_pkey_meth,
 };
 
 static const EVP_PKEY_METHOD *evp_pkey_meth_find(int type) {
@@ -131,6 +131,9 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype, int cmd,
     OPENSSL_PUT_ERROR(EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return 0;
   }
+  /* Skip the operation checks since this is called in a very early stage */
+  if (ctx->pmeth->digest_custom != NULL)
+      goto doit;
 
   if (ctx->operation == EVP_PKEY_OP_UNDEFINED) {
     OPENSSL_PUT_ERROR(EVP, EVP_R_NO_OPERATION_SET);
@@ -141,7 +144,7 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype, int cmd,
     OPENSSL_PUT_ERROR(EVP, EVP_R_INVALID_OPERATION);
     return 0;
   }
-
+doit:
   return ctx->pmeth->ctrl(ctx, cmd, p1, p2);
 }
 

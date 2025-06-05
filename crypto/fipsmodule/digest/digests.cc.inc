@@ -24,6 +24,10 @@
 #include "../delocate.h"
 #include "internal.h"
 
+#ifndef OPENSSL_NO_SM3
+#include <openssl/sm3.h>
+#endif
+
 #if defined(NDEBUG)
 #define CHECK(x) (void)(x)
 #else
@@ -174,5 +178,31 @@ DEFINE_METHOD_FUNCTION(EVP_MD, EVP_sha512_256) {
   out->block_size = 128;
   out->ctx_size = sizeof(SHA512_CTX);
 }
+
+#ifndef OPENSSL_NO_SM3
+static void sm3_init(EVP_MD_CTX *ctx) {
+  BCM_sm3_Init(reinterpret_cast<SM3_CTX *>(ctx->md_data));
+}
+
+static void sm3_update(EVP_MD_CTX *ctx, const void *data, size_t count) {
+  BCM_sm3_Update(reinterpret_cast<SM3_CTX *>(ctx->md_data), data,
+                        count);
+}
+
+static void sm3_final(EVP_MD_CTX *ctx, uint8_t *md) {
+  BCM_sm3_Final(md, reinterpret_cast<SM3_CTX *>(ctx->md_data));
+}
+
+DEFINE_METHOD_FUNCTION(EVP_MD, EVP_sm3) {
+  out->type = NID_sm3;
+  out->md_size = SM3_DIGEST_LENGTH;
+  out->flags = 0;
+  out->init = sm3_init;
+  out->update = sm3_update;
+  out->final = sm3_final;
+  out->block_size = SM3_CBLOCK;
+  out->ctx_size = sizeof(SM3_CTX);
+}
+#endif
 
 #undef CHECK

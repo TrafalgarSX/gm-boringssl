@@ -29,6 +29,7 @@ static int eckey_pub_encode(CBB *out, const EVP_PKEY *key) {
   const EC_GROUP *group = EC_KEY_get0_group(ec_key);
   const EC_POINT *public_key = EC_KEY_get0_public_key(ec_key);
 
+  // either use the standard EC key type or the SM2 key type, algorithm always ec_asn1_meth.oid
   // See RFC 5480, section 2.
   CBB spki, algorithm, key_bitstring;
   if (!CBB_add_asn1(out, &spki, CBS_ASN1_SEQUENCE) ||
@@ -65,7 +66,12 @@ static int eckey_pub_decode(EVP_PKEY *out, CBS *params, CBS *key) {
     return 0;
   }
 
-  EVP_PKEY_assign_EC_KEY(out, eckey.release());
+  if(EC_KEY_get_group_curvname(group) != NID_sm2) {
+    EVP_PKEY_assign_EC_KEY(out, eckey.release());
+  }else{
+    // For SM2, we use a different key type.
+    EVP_PKEY_assign_SM2_KEY(out, eckey.release());
+  }
   return 1;
 }
 
@@ -100,7 +106,14 @@ static int eckey_priv_decode(EVP_PKEY *out, CBS *params, CBS *key) {
     return 0;
   }
 
-  EVP_PKEY_assign_EC_KEY(out, ec_key);
+  if(EC_KEY_get_group_curvname(group) != NID_sm2) {
+    // For non-SM2 keys, we use the standard EC key type.
+    EVP_PKEY_assign_EC_KEY(out, ec_key);
+  } else {
+    // For SM2 keys, we use a different key type.
+    EVP_PKEY_assign_SM2_KEY(out, ec_key);
+  }
+
   return 1;
 }
 
@@ -112,6 +125,9 @@ static int eckey_priv_encode(CBB *out, const EVP_PKEY *key) {
   // means. Both OpenSSL and NSS omit the redundant parameters, so we omit them
   // as well.
   unsigned enc_flags = EC_KEY_get_enc_flags(ec_key) | EC_PKEY_NO_PARAMETERS;
+
+  // TODO 这个函数没有测试过，后续可能有 bug
+  // either use the standard EC key type or the SM2 key type, algorithm always ec_asn1_meth.oid
 
   // See RFC 5915.
   CBB pkcs8, algorithm, private_key;
@@ -255,6 +271,41 @@ const EVP_PKEY_ASN1_METHOD ec_asn1_meth = {
     int_ec_free,
 };
 
+#if !defined(OPENSSL_NO_SM2)
+const EVP_PKEY_ASN1_METHOD sm2_asn1_meth = {
+    EVP_PKEY_SM2,
+    // 1.2.156.10197.1.301
+    {0x2a, 0x81, 0x1c, 0xcf, 0x55, 0x01, 0x82, 0x2d},
+    8,
+    &sm2_pkey_meth,
+
+    eckey_pub_decode,
+    eckey_pub_encode,
+    eckey_pub_cmp,
+
+    eckey_priv_decode,
+    eckey_priv_encode,
+
+    /*set_priv_raw=*/NULL,
+    /*set_pub_raw=*/NULL,
+    /*get_priv_raw=*/NULL,
+    /*get_pub_raw=*/NULL,
+    eckey_set1_tls_encodedpoint,
+    eckey_get1_tls_encodedpoint,
+
+    eckey_opaque,
+
+    int_ec_size,
+    ec_bits,
+
+    ec_missing_parameters,
+    ec_copy_parameters,
+    ec_cmp_parameters,
+
+    int_ec_free,
+};
+#endif
+
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key) {
   if (EVP_PKEY_assign_EC_KEY(pkey, key)) {
     EC_KEY_up_ref(key);
@@ -263,8 +314,22 @@ int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key) {
   return 0;
 }
 
+int EVP_PKEY_set1_SM2_KEY(EVP_PKEY *pkey, EC_KEY *key) {
+    if (EVP_PKEY_assign_SM2_KEY(pkey, key)) {
+      EC_KEY_up_ref(key);
+      return 1;
+    }
+    return 0;
+}
+
 int EVP_PKEY_assign_EC_KEY(EVP_PKEY *pkey, EC_KEY *key) {
   evp_pkey_set_method(pkey, &ec_asn1_meth);
+  pkey->pkey = key;
+  return key != NULL;
+}
+
+int EVP_PKEY_assign_SM2_KEY(EVP_PKEY *pkey, EC_KEY *key) {
+  evp_pkey_set_method(pkey, &sm2_asn1_meth);
   pkey->pkey = key;
   return key != NULL;
 }
@@ -279,6 +344,22 @@ EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey) {
 
 EC_KEY *EVP_PKEY_get1_EC_KEY(const EVP_PKEY *pkey) {
   EC_KEY *ec_key = EVP_PKEY_get0_EC_KEY(pkey);
+  if (ec_key != NULL) {
+    EC_KEY_up_ref(ec_key);
+  }
+  return ec_key;
+}
+
+EC_KEY *EVP_PKEY_get0_SM2_KEY(const EVP_PKEY *pkey) {
+  if (pkey->type != EVP_PKEY_SM2) {
+    OPENSSL_PUT_ERROR(EVP, EVP_R_EXPECTING_AN_EC_KEY_KEY);
+    return NULL;
+  }
+  return reinterpret_cast<EC_KEY*>(pkey->pkey);
+}
+
+EC_KEY *EVP_PKEY_get1_SM2_KEY(const EVP_PKEY *pkey) {
+  EC_KEY *ec_key = EVP_PKEY_get0_SM2_KEY(pkey);
   if (ec_key != NULL) {
     EC_KEY_up_ref(ec_key);
   }

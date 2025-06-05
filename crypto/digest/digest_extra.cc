@@ -45,6 +45,9 @@ static const struct nid_to_digest nid_to_digest_mapping[] = {
     {NID_sha512, EVP_sha512, SN_sha512, LN_sha512},
     {NID_sha512_256, EVP_sha512_256, SN_sha512_256, LN_sha512_256},
     {NID_md5_sha1, EVP_md5_sha1, SN_md5_sha1, LN_md5_sha1},
+#ifndef OPENSSL_NO_SM3
+    {NID_sm3, EVP_sm3, SN_sm3, LN_sm3},
+#endif
     // As a remnant of signing |EVP_MD|s, OpenSSL returned the corresponding
     // hash function when given a signature OID. To avoid unintended lax parsing
     // of hash OIDs, this is no longer supported for lookup by OID or NID.
@@ -99,6 +102,7 @@ static const struct {
     {{0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x03}, 9, NID_sha512},
     // 2.16.840.1.101.3.4.2.4
     {{0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x04}, 9, NID_sha224},
+    {{0x2A, 0x81, 0x1C, 0xCF, 0x55, 0x01, 0x83, 0x11}, 8, NID_sm3},
 };
 
 static const EVP_MD *cbs_to_md(const CBS *cbs) {

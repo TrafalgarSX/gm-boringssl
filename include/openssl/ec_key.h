@@ -72,6 +72,7 @@ OPENSSL_EXPORT const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key);
 // different group.
 OPENSSL_EXPORT int EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group);
 
+OPENSSL_EXPORT int EC_KEY_get_group_curvname(const EC_GROUP *group);
 // EC_KEY_get0_private_key returns a pointer to the private key inside |key|.
 OPENSSL_EXPORT const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *key);
 
