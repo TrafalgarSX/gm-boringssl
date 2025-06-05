@@ -25,10 +25,10 @@ extern "C" {
 #  define SM3_CBLOCK      64
 
 struct sm3state_st {
-   uint32_t A[8];
+   uint32_t h[8];
    uint32_t Nl, Nh;
    uint8_t data[SM3_CBLOCK];
-   unsigned int num;
+   unsigned int num, md_len;
 };
 
 OPENSSL_EXPORT int SM3_Init(SM3_CTX *c);

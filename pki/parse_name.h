@@ -1,6 +1,16 @@
 // Copyright 2016 The Chromium Authors
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef BSSL_PKI_PARSE_NAME_H_
 #define BSSL_PKI_PARSE_NAME_H_
@@ -13,7 +23,7 @@
 #include "input.h"
 #include "parser.h"
 
-namespace bssl {
+BSSL_NAMESPACE_BEGIN
 
 // id-at-commonName: 2.5.4.3 (RFC 5280)
 inline constexpr uint8_t kTypeCommonNameOid[] = {0x55, 0x04, 0x03};
@@ -152,6 +162,6 @@ typedef std::vector<RelativeDistinguishedName> RDNSequence;
 // successful.
 [[nodiscard]] OPENSSL_EXPORT bool ConvertToRFC2253(
     const RDNSequence &rdn_sequence, std::string *out);
-}  // namespace bssl
+BSSL_NAMESPACE_END
 
 #endif  // BSSL_PKI_PARSE_NAME_H_

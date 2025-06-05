@@ -55,14 +55,14 @@ int ossl_sm2_do_verify(const EC_KEY *key,
  */
 int ossl_sm2_internal_sign(const unsigned char *dgst, int dgstlen,
                            unsigned char *sig, unsigned int *siglen,
-                           EC_KEY *eckey);
+                           const EC_KEY *eckey);
 
 /*
  * SM2 signature verification.
  */
 int ossl_sm2_internal_verify(const unsigned char *dgst, int dgstlen,
                              const unsigned char *sig, int siglen,
-                             EC_KEY *eckey);
+                             const EC_KEY *eckey);
 
 /*
  * SM2 encryption

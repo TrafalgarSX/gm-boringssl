@@ -1,6 +1,16 @@
 // Copyright 2015 The Chromium Authors
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef BSSL_DER_PARSE_VALUES_H_
 #define BSSL_DER_PARSE_VALUES_H_
@@ -13,7 +23,8 @@
 
 #include "input.h"
 
-namespace bssl::der {
+BSSL_NAMESPACE_BEGIN
+namespace der {
 
 // Reads a DER-encoded ASN.1 BOOLEAN value from |in| and puts the resulting
 // value in |out|. Returns whether the encoded value could successfully be
@@ -149,6 +160,7 @@ OPENSSL_EXPORT bool operator>=(const GeneralizedTime &lhs,
 // result in |out| as UTF-8, returning true if successful.
 [[nodiscard]] OPENSSL_EXPORT bool ParseBmpString(Input in, std::string *out);
 
-}  // namespace bssl::der
+}  // namespace der
+BSSL_NAMESPACE_END
 
 #endif  // BSSL_DER_PARSE_VALUES_H_

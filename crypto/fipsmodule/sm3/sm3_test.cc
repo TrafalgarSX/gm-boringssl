@@ -43,11 +43,9 @@ TEST(SM3Test, sm3) {
   SM3_Transform(&ctx, block);
 
   for(int i = 0; i < 8; i++) {
-    std::cout << ctx.A[i] << " ";
+    std::cout << ctx.h[i] << " ";
   }
   std::cout << std::endl;
-
-
 
   s = "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd";
   std::vector<uint8_t> s_byte2(s.begin(), s.end());

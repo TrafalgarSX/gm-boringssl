@@ -40,7 +40,15 @@ for more details.
 As with `errno`, callers must test the function's return value, not the error
 queue to determine whether an operation failed. Some codepaths may not interact
 with the error queue, and the error queue may have state from a previous failed
-operation.
+operation. After checking for failure, the caller can then inspect the error
+queue in the failure case for details.
+
+As a notable exception, some functions in the SSL/TLS library use a multi-step
+process to indicate failure: First, the return value indicates whether the
+operation failed. Then, `SSL_get_error` indicates whether the failure was due to
+an error (`SSL_ERROR_SSL`) or some recoverable condition (e.g.
+`SSL_ERROR_WANT_READ`). In the former case, the caller can use the error queue
+for more information.
 
 When ignoring a failed operation, it is recommended to call `ERR_clear_error` to
 avoid the state interacting with future operations. Failing to do so should not
@@ -50,7 +58,9 @@ operations being mixed in error logging. We hope to
 situation in the future.
 
 Where possible, avoid conditioning on specific reason codes and limit usage to
-logging. The reason codes are very specific and may change over time.
+logging. The reason codes are very fine-grained and tend to leak details of the
+library's internal structure. Changes in the library often have a side effect of
+changing the exact reason code returned.
 
 
 ## Memory allocation
@@ -289,11 +299,11 @@ If documented to output a *newly-allocated* object or a *reference* or *copy* of
 one, the caller is responsible for releasing the object when it is done.
 
 By convention, functions named `get0` return non-owning pointers. Functions
-named `new` or `get1` return owning pointers. Functions named `set0` take
-ownership of arguments. Functions named `set1` do not. They typically take a
-reference or make a copy internally. These names originally referred to the
-effect on a reference count, but the convention applies equally to
-non-reference-counted types.
+named `new` or `get1` return owning pointers. Functions named `set0` or `add0`
+take ownership of arguments. Functions named `set1` or `add1` do not. They
+typically take a reference or make a copy internally. These names originally
+referred to the effect on a reference count, but the convention applies equally
+to non-reference-counted types.
 
 API documentation may also describe more complex obligations. For instance, an
 object may borrow a pointer for longer than the duration of a single function

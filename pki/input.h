@@ -1,6 +1,16 @@
 // Copyright 2015 The Chromium Authors
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef BSSL_DER_INPUT_H_
 #define BSSL_DER_INPUT_H_
@@ -14,7 +24,30 @@
 #include <openssl/base.h>
 #include <openssl/span.h>
 
-namespace bssl::der {
+#if __has_include(<version>)
+#include <version>
+#endif
+
+#if defined(__cpp_lib_ranges) && __cpp_lib_ranges >= 201911L
+#include <ranges>
+BSSL_NAMESPACE_BEGIN
+namespace der {
+class OPENSSL_EXPORT Input;
+}
+BSSL_NAMESPACE_END
+
+// Mark `Input` as satisfying the `view` and `borrowed_range` concepts. This
+// should be done before the definition of `Input`, so that any inlined calls to
+// range functionality use the correct specializations.
+template <>
+inline constexpr bool std::ranges::enable_view<bssl::der::Input> = true;
+template <>
+inline constexpr bool std::ranges::enable_borrowed_range<bssl::der::Input> =
+    true;
+#endif
+
+BSSL_NAMESPACE_BEGIN
+namespace der {
 
 // An opaque class that represents a fixed buffer of data of a fixed length,
 // to be used as an input to other operations. An Input object does not own
@@ -166,6 +199,7 @@ class OPENSSL_EXPORT ByteReader {
   bssl::Span<const uint8_t> data_;
 };
 
-}  // namespace bssl::der
+}  // namespace der
+BSSL_NAMESPACE_END
 
 #endif  // BSSL_DER_INPUT_H_
